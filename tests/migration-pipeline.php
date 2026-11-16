@@ -460,6 +460,13 @@ t( 'Field split: uploads chip turns the Media Library on, other folders stay, up
 t( 'Without the uploads chip the Media Library is off', ISXM_Tools::split_offload_folders( 'download/Combined/' )['media'] === false );
 t( 'Uploads and anything inside it is never a raw server folder', ISXM_Tools::server_folder_path( 'wp-content/uploads/' ) === '' && ISXM_Tools::server_folder_path( 'wp-content/uploads/2021/' ) === '' );
 t( 'Picking wp-content/ walks past uploads (no raw copy of the Media Library)', ! preg_grep( '#^wp-content/uploads/#', ISXM_Tools::server_folder_files( 'wp-content/' ) ) );
+foreach ( [ 'insightx-backup/backups/site-x.wpress', 'insightx-backup/isx_abc/state.json', 'updraft/db.gz', 'ai1wm-backups/a.wpress', 'keep/backup-guide.pdf' ] as $f ) {
+	wp_mkdir_p( dirname( ABSPATH . 'wp-content/' . $f ) );
+	file_put_contents( ABSPATH . 'wp-content/' . $f, 'x' );
+}
+$wc_files = ISXM_Tools::server_folder_files( 'wp-content/' );
+t( 'Picking wp-content/ never uploads backups (storage, job state, other backup plugins)', ! preg_grep( '#^wp-content/(insightx-backup|updraft|ai1wm-backups)/#', $wc_files ), json_encode( array_values( preg_grep( '#backup|updraft#', $wc_files ) ) ) );
+t( '…but a file merely named like a backup is still uploaded', in_array( 'wp-content/keep/backup-guide.pdf', $wc_files, true ) );
 $set( [ 'offload_media_library' => true, 'offload_server_folders' => 'download/Combined/' ] );
 t( 'Field value: uploads chip first, then the server folders', ISXM_Settings::offload_folders() === 'wp-content/uploads/, download/Combined/' && ISXM_Settings::uploads_relative() === 'wp-content/uploads/' );
 

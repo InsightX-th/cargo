@@ -575,10 +575,10 @@ require_once $PLUGIN . '/includes/functions-isx-storage.php';
 $wc = untrailingslashit( WP_CONTENT_DIR );
 // Inside plugins/themes (this plugin's own folder included) is refused too:
 // WordPress replaces those folders on update, taking the backups with them.
-foreach ( array( ABSPATH, $wc, "$wc/", "$wc/plugins", "$wc/uploads", "$wc/themes", dirname( ABSPATH ), '/', ISX_PATH, ISX_PATH . '/storage', "$wc/plugins/other/backups", "$wc/themes/t/backups", "$wc/mu-plugins/x" ) as $bad ) {
+foreach ( array( ABSPATH, $wc, "$wc/", "$wc/plugins", "$wc/uploads", "$wc/themes", dirname( ABSPATH ), '/', ISX_PATH, ISX_PATH . '/storage', "$wc/plugins/other/backups", "$wc/themes/t/backups", "$wc/mu-plugins/x", "$wc/uploads/isx-backups", "$wc/uploads/2025" ) as $bad ) {
 	t( 'S9 refused: ' . str_replace( sys_get_temp_dir(), '<tmp>', $bad ), isx_storage_path_conflict( $bad ) !== '' );
 }
-foreach ( array( "$wc/insightx-backup", "$wc/uploads/isx-backups", '/srv/isx-backups', "$wc/plugins-backups" ) as $ok ) {
+foreach ( array( "$wc/insightx-backup", '/srv/isx-backups', "$wc/plugins-backups", "$wc/uploads-backups" ) as $ok ) {
 	t( 'S9 allowed: ' . str_replace( sys_get_temp_dir(), '<tmp>', $ok ), isx_storage_path_conflict( $ok ) === '' );
 }
 

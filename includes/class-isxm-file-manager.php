@@ -30,7 +30,7 @@ class ISXM_File_Manager {
     const EXECUTABLE = [ 'php', 'php3', 'php4', 'php5', 'php6', 'php7', 'php8', 'phtml', 'pht', 'phps', 'phar', 'shtml', 'cgi', 'pl', 'py', 'sh', 'asp', 'aspx', 'jsp', 'htaccess', 'ini' ];
 
     /** Pages a browser runs script from; only for users trusted with unfiltered HTML. */
-    const MARKUP = [ 'html', 'htm', 'xhtml', 'shtm', 'svg', 'svgz', 'xml', 'xsl' ];
+    const MARKUP = [ 'html', 'htm', 'xhtml', 'xht', 'shtm', 'svg', 'svgz', 'xml', 'xsl', 'xslt', 'rss', 'atom', 'rdf', 'mml', 'mathml', 'htc', 'mht', 'mhtml' ];
 
     private $root;
     private $jail;
@@ -147,6 +147,11 @@ class ISXM_File_Manager {
         $name = (string) $name;
         if ( $name === '' || strlen( $name ) > 255 || preg_match( '#[/\\\\\x00-\x1f\x7f]#', $name ) ) return $this->error( 'bad_name' );
         if ( $name[0] === '.' ) return $this->error( 'hidden_name' );
+        // Windows/NTFS: "x.php " and "x.php." land as x.php, "x.php::$DATA" is
+        // its default stream. ":" is never valid there anyway.
+        if ( strpbrk( $name, ':' ) !== false || rtrim( $name, ' .' ) !== $name ) return $this->error( 'bad_name' );
+        // IIS reads web.config like Apache reads .htaccess.
+        if ( strtolower( $name ) === 'web.config' ) return $this->error( 'executable' );
         $parts = array_slice( explode( '.', strtolower( $name ) ), 1 );
         if ( array_intersect( $parts, self::EXECUTABLE ) ) return $this->error( 'executable' );
         if ( ! $this->allow_markup && array_intersect( $parts, self::MARKUP ) ) return $this->error( 'markup' );
@@ -191,6 +196,29 @@ class ISXM_File_Manager {
         // never renamed, moved or deleted from here.
         $name = $this->valid_name( basename( $absolute ) );
         if ( is_wp_error( $name ) && in_array( $name->get_error_code(), [ 'isxfm_executable', 'isxfm_hidden_name' ], true ) ) return $this->error( 'protected' );
+        return true;
+    }
+
+    /**
+     * changeable() for the item and, for users who may not see private files,
+     * for everything inside it. A folder move/rename/delete used to check only
+     * the folder itself, so a restricted user could delete the scripts and
+     * secret files changeable()/readable() protect one by one, or move them
+     * into an offloaded folder (isxfm_file_written fires for every file).
+     * copy() already walked the tree (copyable()).
+     *
+     * @return true|WP_Error
+     */
+    private function changeable_tree( $absolute ) {
+        $ok = $this->changeable( $absolute );
+        if ( is_wp_error( $ok ) || $this->allow_private || is_link( $absolute ) || ! is_dir( $absolute ) ) return $ok;
+        foreach ( (array) scandir( $absolute ) as $name ) {
+            if ( $name === '.' || $name === '..' || self::is_junk( $name ) ) continue;
+            $child = $absolute . '/' . $name;
+            if ( is_link( $child ) ) return $this->error( 'protected' );
+            $ok = $this->changeable_tree( $child );
+            if ( is_wp_error( $ok ) ) return $ok;
+        }
         return true;
     }
 
@@ -401,8 +429,21 @@ class ISXM_File_Manager {
         return [ 'path' => $this->relative( $dir ), 'query' => $query, 'items' => $items, 'truncated' => $truncated ];
     }
 
+    /**
+     * A FILE with no extension is served without a Content-Type on common
+     * servers and the browser sniffs it as HTML: same rule as MARKUP.
+     *
+     * @return true|WP_Error
+     */
+    private function file_name_ok( $name ) {
+        if ( ! $this->allow_markup && strpos( (string) $name, '.' ) === false ) return $this->error( 'markup' );
+        return true;
+    }
+
     /** An empty new file. @return array|WP_Error {path, notes} */
     public function make_file( $parent, $name ) {
+        $ok = $this->file_name_ok( $name );
+        if ( is_wp_error( $ok ) ) return $ok;
         $target = $this->target( $parent, $name );
         if ( is_wp_error( $target ) ) return $target;
         if ( file_exists( $target ) || is_link( $target ) ) return $this->error( 'exists' );
@@ -427,6 +468,8 @@ class ISXM_File_Manager {
      * @return array|WP_Error {path, notes}
      */
     public function upload( $parent, $name, $tmp, $replace = false, $mover = null ) {
+        $ok = $this->file_name_ok( $name );
+        if ( is_wp_error( $ok ) ) return $ok;
         $target = $this->target( $parent, $name );
         if ( is_wp_error( $target ) ) return $target;
         // A link is never written through (a cross-device move copies into its target).
@@ -444,7 +487,11 @@ class ISXM_File_Manager {
     public function rename( $relative, $name ) {
         $from = $this->item( $relative );
         if ( is_wp_error( $from ) ) return $from;
-        $ok = $this->changeable( $from );
+        if ( ! is_dir( $from ) ) {
+            $ok = $this->file_name_ok( $name );
+            if ( is_wp_error( $ok ) ) return $ok;
+        }
+        $ok = $this->changeable_tree( $from );
         if ( is_wp_error( $ok ) ) return $ok;
         $ok = $this->code_guard( $from );
         if ( is_wp_error( $ok ) ) return $ok;
@@ -455,7 +502,7 @@ class ISXM_File_Manager {
     public function move( $relative, $parent ) {
         $from = $this->item( $relative );
         if ( is_wp_error( $from ) ) return $from;
-        $ok = $this->changeable( $from );
+        $ok = $this->changeable_tree( $from );
         if ( is_wp_error( $ok ) ) return $ok;
         $ok = $this->code_guard( $from );
         if ( is_wp_error( $ok ) ) return $ok;
@@ -468,7 +515,7 @@ class ISXM_File_Manager {
     public function delete( $relative ) {
         $path = $this->item( $relative );
         if ( is_wp_error( $path ) ) return $path;
-        $ok = $this->changeable( $path );
+        $ok = $this->changeable_tree( $path );
         if ( is_wp_error( $ok ) ) return $ok;
         $ok = $this->code_guard( $path );
         if ( is_wp_error( $ok ) ) return $ok;
@@ -539,7 +586,7 @@ class ISXM_File_Manager {
                 if ( $this->force_hidden ) continue;
                 return $this->guarded( $this->relative( $dir . '/' . $name ) );
             }
-            $ok = $this->changeable( $dir . '/' . $name );
+            $ok = $this->changeable_tree( $dir . '/' . $name );
             if ( is_wp_error( $ok ) ) return $ok;
             $ok = $this->code_guard( $dir . '/' . $name );
             if ( is_wp_error( $ok ) ) return $ok;

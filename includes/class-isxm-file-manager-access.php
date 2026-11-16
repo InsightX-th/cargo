@@ -18,11 +18,23 @@ class ISXM_File_Manager_Access {
     const OPTION  = 'isxs_fm_access';
     const ACTIONS = [ 'view', 'upload', 'mkdir', 'rename', 'move', 'download', 'delete' ];
 
+    /**
+     * Full File Manager administrator: the whole ABSPATH, private files and
+     * plugin/theme assets. On multisite that ABSPATH is shared by every site,
+     * so a site administrator (manage_options on one blog) is not enough —
+     * only a super admin. Site admins fall back to the saved role rules.
+     */
+    public static function is_full_admin( $user = null ) {
+        $user = $user ?: wp_get_current_user();
+        if ( ! $user || ! $user->ID ) return false;
+        return is_multisite() ? is_super_admin( $user->ID ) : user_can( $user, 'manage_options' );
+    }
+
     /** @return array{actions:string[],root:string} */
     public static function rules( $user = null ) {
         $user = $user ?: wp_get_current_user();
         if ( ! $user || ! $user->ID ) return [ 'actions' => [], 'root' => '' ];
-        return self::resolve_rules( (array) $user->roles, user_can( $user, 'manage_options' ), self::config() );
+        return self::resolve_rules( (array) $user->roles, self::is_full_admin( $user ), self::config() );
     }
 
     public static function can( $action, $user = null ) {

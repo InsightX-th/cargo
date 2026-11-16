@@ -17,6 +17,7 @@ function untrailingslashit( $s ) { return rtrim( (string) $s, '/\\' ); }
 function wp_mkdir_p( $dir ) { return @mkdir( $dir, 0777, true ) || is_dir( $dir ); }
 function wp_json_encode( $v, $f = 0 ) { return json_encode( $v, $f ); }
 function __( $t, $d = '' ) { return $t; }
+function get_current_user_id() { return 7; }
 function wp_generate_password( $n = 12 ) { return substr( str_repeat( bin2hex( random_bytes( 32 ) ), 2 ), 0, $n ); }
 class ISX_Logger { public static function __callStatic( $n, $a ) {} }
 class ISX_Export { public static function abort_pending_upload( $job ) {} }
@@ -58,6 +59,8 @@ t( 'R7 a cancelled export is not running', ISX_Job::running( 'export', 300 ) ===
 
 $c = ISX_Job::create( 'export' );
 t( 'R8 the secret needed to poll it comes back with the job', ISX_Job::running( 'export', 300 )->get( 'secret' ) === $c->get( 'secret' ) && strlen( (string) $c->get( 'secret' ) ) === 32 );
+
+t( 'R9 a job records who staged it (import start is bound to its creator)', (int) $c->get( 'creator' ) === 7 );
 
 exec( 'rm -rf ' . escapeshellarg( $root ) );
 echo "\n========================================\nTOTAL: $pass passed, $fail failed\n";

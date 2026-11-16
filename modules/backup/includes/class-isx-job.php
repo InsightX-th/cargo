@@ -71,6 +71,9 @@ class ISX_Job {
 				'cursor'   => array(),
 				'progress' => 0,
 				'created'  => time(),
+				// Who staged it: an import may only be started by its creator
+				// (ISX_Admin::authorize_import_start). 0 for CLI/cron jobs.
+				'creator'  => function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0,
 				// Per-job secret stored on disk. Import rewrites wp_users / wp_options,
 				// which invalidates the admin session mid-run; this key lets the poller
 				// keep authenticating against the on-disk job instead of the database.

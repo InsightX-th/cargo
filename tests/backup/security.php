@@ -216,7 +216,8 @@ $r = json_decode( $out, true );
 t( 'E1 InsightX AllHub\'s own folder (and anything in it) is refused', is_array( $r ) && $r['/wp-content/plugins/insightx-allhub'] && $r['/wp-content/plugins/insightx-allhub/storage'] && $r['/wp-content/plugins/insightx-allhub/modules/backup/storage'], $out );
 t( 'E2 inside any plugin, theme or mu-plugin folder is refused (replaced on update)', is_array( $r ) && $r['/wp-content/plugins/insightx-backup/storage'] && $r['/wp-content/themes/flatsome/backups'] && $r['/wp-content/mu-plugins/b'], $out );
 t( 'E3 "../" cannot walk back into plugins', is_array( $r ) && $r['/wp-content/plugins/../plugins/x'], $out );
-t( 'E4 a dedicated folder elsewhere is fine (the default, uploads, outside the site)', is_array( $r ) && ! $r['/wp-content/insightx-backup'] && ! $r['/wp-content/uploads/backups'] && ! $r['/srv/backups'], $out );
+t( 'E4 a dedicated folder elsewhere is fine (the default, outside the site)', is_array( $r ) && ! $r['/wp-content/insightx-backup'] && ! $r['/srv/backups'], $out );
+t( 'E4b never inside uploads (deny-all .htaccess would cover live media)', is_array( $r ) && $r['/wp-content/uploads/backups'], $out );
 $out = isx_sub( '
 $dir = sys_get_temp_dir() . "/isxsec_store_" . getmypid();
 @mkdir( $dir, 0777, true );
@@ -333,7 +334,16 @@ t( 'H7 refusals render as an error page, not a saved "admin-ajax.html"', false !
 $views = file_get_contents( $MODULE . '/views/backups.php' ) . file_get_contents( $MODULE . '/views/reset-hub.php' );
 t( 'H8 download links carry no "download" attribute (it saves error bodies as files)', strpos( $views, 'isx_download' ) !== false && strpos( $views, 'role="menuitem" download' ) === false );
 $dds = isx_method_body( $ADMIN, 'ajax_direct_download_save' );
-t( 'H9 the direct-link switch needs a nonce and manage_options, not just export', strpos( $dds, "self::guard( 'export' )" ) !== false && strpos( $dds, "current_user_can( self::cap( 'manage_options' ) )" ) !== false );
+$ra = isx_method_body( $ADMIN, 'require_admin' );
+t( 'H9 require_admin() demands manage_options (network-mapped)', strpos( $ra, "current_user_can( self::cap( 'manage_options' ) )" ) !== false && strpos( $ra, 'wp_send_json_error' ) !== false );
+foreach ( [ 'ajax_direct_download_save' => 'direct-link switch', 'ajax_storage_save' => 'S3 endpoint (SSRF)', 'ajax_storage_dir_save' => 'storage folder (.htaccess writes)' ] as $m => $what ) {
+	$b = isx_method_body( $ADMIN, $m );
+	$g = strpos( $b, "self::guard( 'export' )" ); $a = strpos( $b, 'self::require_admin(' ); $in = strpos( $b, '$_POST' );
+	t( "H10 $what: nonce via guard(), then admin-only, before any input", $g !== false && $a !== false && $g < $a && ( $in === false || $a < $in ) );
+}
+$ar = isx_method_body( $ADMIN, 'ajax_run' ); $ad = isx_method_body( $ADMIN, 'ajax_import_decrypt' ); $ai = isx_method_body( $ADMIN, 'authorize_import_start' );
+t( 'H11 secret-gated runners re-check import authority before running a step', strpos( $ar, 'self::authorize_import_start( $job )' ) !== false && strpos( $ar, 'self::authorize_import_start( $job )' ) < strpos( $ar, 'self::run_step( $job )' ) && strpos( $ad, 'self::authorize_import_start( $job )' ) !== false );
+t( 'H12 import start needs no DISALLOW_FILE_MODS and, before the first step, the creator with import rights', strpos( $ai, 'DISALLOW_FILE_MODS' ) !== false && strpos( $ai, "'creator'" ) !== false && strpos( $ai, 'get_current_user_id()' ) !== false && strpos( $ai, "'heartbeat'" ) !== false );
 
 echo "\n========================================\nTOTAL: $pass passed, $fail failed\n";
 exit( $fail ? 1 : 0 );

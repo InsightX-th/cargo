@@ -259,6 +259,16 @@ class ISXM_Test_WPDB {
 			}
 			return $rows;
 		}
+		// ISXM_Items::files_shared_postmeta(): offload records sharing a base_key.
+		if ( empty( $GLOBALS['isxm_t']['wpdb_results'] ) && strpos( $q, 'meta_value LIKE' ) !== false && ( $this->prepared_args[0] ?? '' ) === ISXM_Offload::META_KEY ) {
+			$rows = array();
+			foreach ( (array) ( $GLOBALS['isxm_t']['meta'] ?? array() ) as $id => $meta ) {
+				if ( (int) $id !== (int) ( $this->prepared_args[2] ?? 0 ) && isset( $meta[ ISXM_Offload::META_KEY ] ) ) {
+					$rows[] = (object) array( 'post_id' => $id, 'meta_value' => $meta[ ISXM_Offload::META_KEY ] );
+				}
+			}
+			return $rows;
+		}
 		return empty( $GLOBALS['isxm_t']['wpdb_results'] ) ? array() : array_shift( $GLOBALS['isxm_t']['wpdb_results'] );
 	}
 	public function __call( $name, $args ) { return null; }

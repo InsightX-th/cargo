@@ -111,6 +111,16 @@ class ISXM_Tools {
         check_ajax_referer( self::NONCE_ACTION, 'nonce' );
     }
 
+    /**
+     * Server folders are paths under the ABSPATH every site of a network
+     * shares (other sites' uploads, the backup storage). On multisite only a
+     * super admin may choose or browse them; a site administrator keeps the
+     * Media Library offload of their own site.
+     */
+    public static function can_manage_server_folders() {
+        return ! is_multisite() || is_super_admin();
+    }
+
     /* ---------------------------------------------------------------------
      * Settings
      * ------------------------------------------------------------------ */
@@ -190,7 +200,13 @@ class ISXM_Tools {
         // keep what is stored (save() would otherwise reset it to default).
         delete_transient( self::SERVER_STATS ); // folders may change below
         $settings['offload_media_library'] = (bool) $current['offload_media_library'];
-        if ( isset( $_POST['offload_folders'] ) ) {
+        $can_folders = self::can_manage_server_folders();
+        if ( isset( $_POST['offload_folders'] ) && ! $can_folders ) {
+            // Site admin on multisite: only the Media Library chip counts.
+            $split = self::split_offload_folders( wp_unslash( (string) $_POST['offload_folders'] ) );
+            $settings['offload_media_library']  = $split['media'];
+            $settings['offload_server_folders'] = $current['offload_server_folders'];
+        } elseif ( isset( $_POST['offload_folders'] ) ) {
             // The Offload card's one field: the uploads chip switches the
             // Media Library on, everything else is a server folder.
             $split = self::split_offload_folders( wp_unslash( (string) $_POST['offload_folders'] ) );
@@ -202,7 +218,7 @@ class ISXM_Tools {
             if ( $split['rejected'] ) {
                 $folders_warning = trim( $folders_warning . ' ' . sprintf( __( 'These server folders cannot be uploaded and were removed: %s', 'insightx-allhub' ), implode( ', ', $split['rejected'] ) ) );
             }
-        } elseif ( isset( $_POST['offload_server_folders'] ) ) {
+        } elseif ( isset( $_POST['offload_server_folders'] ) && $can_folders ) {
             $server = self::sanitize_server_folders( wp_unslash( (string) $_POST['offload_server_folders'] ) );
             $settings['offload_server_folders'] = $server['value'];
             if ( $server['rejected'] ) {
@@ -216,7 +232,7 @@ class ISXM_Tools {
         $settings['pdf_dpi']     = isset( $_POST['pdf_dpi'] ) && isset( ISXM_Pdf::PRESETS[ (int) $_POST['pdf_dpi'] ] ) ? (int) $_POST['pdf_dpi'] : (int) $current['pdf_dpi'];
         $settings['pdf_folders'] = $current['pdf_folders'];
         $settings['pdf_backup']  = $current['pdf_backup'];
-        if ( isset( $_POST['pdf_folders'] ) ) {
+        if ( isset( $_POST['pdf_folders'] ) && $can_folders ) {
             $pdf = self::sanitize_server_folders( wp_unslash( (string) $_POST['pdf_folders'] ) );
             $settings['pdf_folders'] = $pdf['value'];
             if ( $pdf['rejected'] ) {
@@ -668,6 +684,21 @@ class ISXM_Tools {
         foreach ( array_merge( self::BLOCKED_SERVER_FOLDERS, [ ISXM_Settings::uploads_relative() ] ) as $blocked ) {
             if ( strpos( $relative, $blocked ) === 0 ) return true;
         }
+        // Backups never go to the bucket, whichever folder was chosen above
+        // them: the Backup module's storage (whole-site archives, job secrets)
+        // and any folder File Manager treats as a backup folder.
+        if ( defined( 'ISX_STORAGE_PATH' ) ) {
+            $storage = ltrim( substr( wp_normalize_path( (string) ISX_STORAGE_PATH ), strlen( wp_normalize_path( (string) ABSPATH ) ) ), '/' );
+            if ( $storage !== '' && strpos( wp_normalize_path( ISX_STORAGE_PATH ), wp_normalize_path( ABSPATH ) ) === 0 && strpos( $relative . '/', trailingslashit( $storage ) ) === 0 ) return true;
+        }
+        $parts = explode( '/', strtolower( $relative ) );
+        array_pop( $parts ); // folder names only: "backup-guide.pdf" is fine
+        $words = class_exists( 'ISXM_File_Manager' ) ? ISXM_File_Manager::SECRET_DIRS : [ 'backup', 'updraft', 'backwpup', 'wpvivid', 'duplicator', 'ai1wm' ];
+        foreach ( $parts as $part ) {
+            foreach ( $words as $word ) {
+                if ( $part !== '' && strpos( $part, $word ) !== false ) return true;
+            }
+        }
         return false;
     }
 
@@ -1095,6 +1126,9 @@ class ISXM_Tools {
      */
     public function ajax_server_folders() {
         $this->guard();
+        if ( ! self::can_manage_server_folders() ) {
+            wp_send_json_error( [ 'message' => __( 'Only a network administrator can choose server folders on a multisite network', 'insightx-allhub' ) ], 403 );
+        }
         $prefix  = isset( $_POST['prefix'] ) ? self::sanitize_prefix( $_POST['prefix'] ) : '';
         $uploads = ISXM_Settings::uploads_relative();
         if ( $prefix === $uploads ) {

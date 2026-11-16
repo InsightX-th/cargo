@@ -1022,6 +1022,17 @@ class ISX_Import {
 			return;
 		}
 
+		// Locator options the target never had must not survive from the
+		// package either. reassert_locator_options() only runs when a batch is
+		// recognised as touching wp_options, which a manifest table_prefix that
+		// differs from the dump's prefix can sidestep; this final pass cannot be.
+		global $wpdb;
+		foreach ( self::locator_options() as $name ) {
+			if ( ! isset( $snapshot[ $name ] ) ) {
+				$wpdb->delete( $wpdb->options, array( 'option_name' => $name ) );
+			}
+		}
+
 		$restored = 0;
 		foreach ( $snapshot as $name => $encoded ) {
 			$value = base64_decode( (string) $encoded ); // phpcs:ignore

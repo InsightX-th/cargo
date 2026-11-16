@@ -364,4 +364,39 @@ mkdir( $root . 'wp-content/updraft' );
 check( 'backup folders get no size', $fs->dir_sizes( [ 'wp-content/updraft' ] )['sizes'] === [] );
 @unlink( $root . 'download/sz/link' );
 
+group( 'A restricted user cannot move or delete hidden files by moving or deleting their folder' );
+$root = fresh_root();
+mkdir( $root . 'site/src/updraft', 0777, true );
+mkdir( $root . 'site/dest', 0777, true );
+mkdir( $root . 'site/plain', 0777, true );
+file_put_contents( $root . 'site/src/dump.sql', 'sql' );
+file_put_contents( $root . 'site/src/updraft/backup.zip', 'zip' );
+file_put_contents( $root . 'site/plain/a.txt', 'a' );
+mkdir( $root . 'site/scripts', 0777, true );
+file_put_contents( $root . 'site/scripts/cfg.php', '<?php' );
+$seen = [];
+add_filter( 'isxfm_file_written', function ( $notes, $path ) use ( &$seen ) { $seen[] = $path; return $notes; } );
+$fs = new ISXM_File_Manager( $root, false, 'site/', false, false );
+check( 'moving a folder that holds a secret file is refused', code_of( $fs->move( 'site/src', 'site/dest' ) ) !== 'ok' && is_file( $root . 'site/src/dump.sql' ) );
+check( '…and nothing was reported as written (nothing reaches the bucket)', $seen === [] );
+check( 'renaming it is refused too', code_of( $fs->rename( 'site/src', 'src2' ) ) !== 'ok' );
+check( 'deleting a folder that holds a script is refused', code_of( $fs->delete( 'site/scripts' ) ) !== 'ok' && is_file( $root . 'site/scripts/cfg.php' ) );
+check( 'emptying its parent is refused', code_of( $fs->empty_dir( 'site' ) ) !== 'ok' && is_file( $root . 'site/scripts/cfg.php' ) );
+check( 'a folder with ordinary files still moves', code_of( $fs->move( 'site/plain', 'site/dest' ) ) === 'ok' && is_file( $root . 'site/dest/plain/a.txt' ) );
+$admin = new ISXM_File_Manager( $root, false, '', true, true );
+check( 'an administrator can still delete such a folder', code_of( $admin->delete( 'site/scripts' ) ) === 'ok' );
+
+group( 'Names a restricted user cannot create' );
+$root = fresh_root();
+$fs = new ISXM_File_Manager( $root, false, 'download/', false, false );
+foreach ( [ 't.xht', 't.rss', 't.atom', 't.xslt', 't.mml', 'web.config', 'WEB.CONFIG', 'x.php ', 'x.php.', 'x.php::$DATA', 'a:b.txt' ] as $bad ) {
+    check( 'refused: ' . json_encode( $bad ), code_of( $fs->make_file( 'download', $bad ) ) !== 'ok' && ! file_exists( $root . 'download/' . rtrim( $bad, ' .' ) ) );
+}
+check( 'a file with no extension is refused without unfiltered_html', code_of( $fs->make_file( 'download', 'README' ) ) === 'isxfm_markup' );
+check( '…but a folder with no dot is fine', is_string( $fs->make_dir( 'download', 'Brochures' ) ) );
+check( '…and so is a normal file', code_of( $fs->make_file( 'download', 'notes.txt' ) ) === 'ok' );
+check( 'renaming a file to no extension is refused', code_of( $fs->rename( 'download/notes.txt', 'notes' ) ) === 'isxfm_markup' );
+$trusted = new ISXM_File_Manager( $root, false, 'download/', true, false );
+check( 'with unfiltered_html a file with no extension is allowed', code_of( $trusted->make_file( 'download', 'LICENSE' ) ) === 'ok' );
+
 finish();

@@ -455,6 +455,21 @@ update_post_meta( 51, '_wp_attached_file', '2025/08/photo.jpg' );
 $o->offload_attachment( 51, array( 'file' => '2025/08/photo.jpg' ) );
 $r8 = get_post_meta( 51, ISXM_Offload::META_KEY, true );
 t( 'E8 content-type folder flattens year/month + version', is_array( $r8 ) && $r8['base_key'] === 'products/blue-shirt/', json_encode( $r8 ) );
+// A second attachment with the same file name under a parent with the same
+// slug (e.g. an author's draft titled like the admin's product) must not
+// PUT over the first one's object.
+isxm_test_add_post( 1010, array( 'post_type' => 'product', 'post_name' => 'blue-shirt' ) );
+isxm_test_add_post( 5300, array( 'post_parent' => 1010 ) );
+update_post_meta( 5300, '_wp_attached_file', '2025/08/photo.jpg' );
+fake_s3_reset();
+$o->offload_attachment( 5300, array( 'file' => '2025/08/photo.jpg' ) );
+$r8b = get_post_meta( 5300, ISXM_Offload::META_KEY, true );
+$puts = array_column( fake_s3_requests(), 'uri' );
+t( 'E8b a colliding key gets its own sub-folder instead of overwriting', is_array( $r8b ) && $r8b['base_key'] === 'products/blue-shirt/5300/' && ! in_array( '/media/products/blue-shirt/photo.jpg', $puts, true ), json_encode( array( $r8b['base_key'] ?? null, $puts ) ) );
+t( 'E8c the first attachment still owns its key', get_post_meta( 51, ISXM_Offload::META_KEY, true )['base_key'] === 'products/blue-shirt/' );
+fake_s3_reset();
+$o->offload_attachment( 5300, array( 'file' => '2025/08/photo.jpg' ) );
+t( 'E8d re-offload keeps the sub-folder (stable URLs)', get_post_meta( 5300, ISXM_Offload::META_KEY, true )['base_key'] === 'products/blue-shirt/5300/' );
 
 file_put_contents( "$uploads/deny-original.jpg", 'x' );
 isxm_test_add_post( 52, array() );

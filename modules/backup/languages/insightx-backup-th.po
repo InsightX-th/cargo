@@ -2083,3 +2083,11 @@ msgstr "ดาวน์โหลดข้อมูลสำรองผ่าน
 #: views/settings.php
 msgid "Anyone who gets a backup's URL (browser history, server or CDN logs) can download the whole site without logging in — only the random part of the file name protects it. On nginx the folder must also be allowed in the server config. Turn it back off once the download is done"
 msgstr "ใครได้ URL ของไฟล์สำรอง (จากประวัติเบราว์เซอร์ หรือ log ของ server/CDN) จะโหลดทั้งเว็บไปได้โดยไม่ต้อง login — มีแค่ส่วนที่สุ่มในชื่อไฟล์ที่ช่วยป้องกัน บน nginx ต้องอนุญาตโฟลเดอร์นี้ใน config ของ server ด้วย โหลดเสร็จแล้วควรปิดกลับ"
+
+#: includes/class-isx-admin.php
+msgid "Import step refused: file modifications are disabled (DISALLOW_FILE_MODS)"
+msgstr "ปฏิเสธขั้นตอนนำเข้า: ปิดการแก้ไขไฟล์ไว้ (DISALLOW_FILE_MODS)"
+
+#: includes/class-isx-admin.php
+msgid "Import start refused: the request is not from the job creator with import rights"
+msgstr "ปฏิเสธการเริ่มนำเข้า: คำขอไม่ได้มาจากผู้สร้างงานที่มีสิทธิ์นำเข้า"

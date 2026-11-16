@@ -432,7 +432,7 @@ class ISXM_Offload {
             $version = '';
         }
 
-        return [ 'base_key' => $base_key, 'version' => $version ];
+        return [ 'base_key' => $base_key, 'version' => $version, 'flat' => $flatten ];
     }
 
     /** Attachment ID being offloaded from its own first upload, else 0. */
@@ -520,6 +520,24 @@ class ISXM_Offload {
         $destination = self::destination_key( $attachment_id, $relative, $existing, $migration_paths ? $stage_dir : '' );
         $base_key    = $destination['base_key'];
         $version     = $destination['version'];
+
+        // A content-type folder drops year/month and the version, so the key
+        // comes from things an uploader controls (a draft's title, a referer).
+        // Never PUT over an object another attachment already owns: give this
+        // one its own sub-folder instead. A re-offload keeps the sub-folder it
+        // already has, so its URLs stay put. (Year/month keys mirror the local
+        // folder, where WordPress already keeps names unique.)
+        if ( ! empty( $destination['flat'] ) ) {
+            $own = $base_key . (int) $attachment_id . '/';
+            if ( is_array( $existing ) && ( $existing['base_key'] ?? '' ) === $own ) {
+                $base_key = $own;
+            } elseif ( ! is_array( $existing ) || ( $existing['base_key'] ?? '' ) !== $base_key ) {
+                $taken = ISXM_Items::files_shared( (string) $settings['bucket'], (string) $settings['endpoint'], $base_key, (int) $attachment_id );
+                if ( array_intersect( (array) $filenames, $taken ) ) {
+                    $base_key = $own;
+                }
+            }
+        }
 
         $client   = new ISXM_Client();
         $uploaded = [];

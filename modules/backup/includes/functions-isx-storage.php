@@ -60,6 +60,9 @@ function isx_storage_path_conflict( $path ) {
 		defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : $content . '/mu-plugins',
 		$content . '/themes',
 		ISX_PLUGIN_ROOT,
+		// Public media: a backups folder here would put deny-all .htaccess over
+		// live uploads (or the archives under a web-served URL).
+		$content . '/uploads',
 	);
 	foreach ( $replaced as $dir ) {
 		$dir = untrailingslashit( str_replace( '\\', '/', $dir ) );

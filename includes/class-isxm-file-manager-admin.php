@@ -22,7 +22,7 @@ class ISXM_File_Manager_Admin {
     }
 
     public function register_menu() {
-        if ( current_user_can( 'manage_options' ) ) {
+        if ( ISXM_File_Manager_Access::is_full_admin() ) {
             $this->hook = (string) add_submenu_page( ISXM_Admin::PAGE_SLUG, __( 'File Manager', 'insightx-allhub' ), __( 'File Manager', 'insightx-allhub' ), 'manage_options', self::SLUG, [ $this, 'render_page' ] );
         } elseif ( ISXM_File_Manager_Access::can( 'view' ) ) {
             // Everyone else given access sees File Manager on its own — never
@@ -34,8 +34,11 @@ class ISXM_File_Manager_Admin {
 
     /** This user's file system: locked to their folder. */
     private function fs() {
-        $admin = current_user_can( 'manage_options' );
-        return ( new ISXM_File_Manager( ABSPATH, null, ISXM_File_Manager_Access::rules()['root'], current_user_can( 'unfiltered_html' ), $admin ) )
+        $admin = ISXM_File_Manager_Access::is_full_admin();
+        // Plugin/theme assets follow core's own edit_plugins/edit_themes (which
+        // also honour DISALLOW_FILE_EDIT and multisite).
+        $code  = $admin && current_user_can( 'edit_plugins' ) && current_user_can( 'edit_themes' );
+        return ( new ISXM_File_Manager( ABSPATH, null, ISXM_File_Manager_Access::rules()['root'], current_user_can( 'unfiltered_html' ), $admin, $code ) )
             ->force_hidden( $admin );
     }
 
@@ -45,7 +48,7 @@ class ISXM_File_Manager_Admin {
         wp_enqueue_script( 'isxs-fm', ISXM_PLUGIN_URL . 'assets/js/file-manager.js', [ 'jquery' ], filemtime( ISXM_PLUGIN_DIR . 'assets/js/file-manager.js' ), true );
         $fs    = $this->fs();
         $rules = ISXM_File_Manager_Access::rules();
-        $admin = current_user_can( 'manage_options' );
+        $admin = ISXM_File_Manager_Access::is_full_admin();
         wp_localize_script( 'isxs-fm', 'isxsFm', [
             'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
             'downloadUrl' => admin_url( 'admin-post.php?action=isxs_fm_download' ),
@@ -195,7 +198,7 @@ class ISXM_File_Manager_Admin {
 
     public function render_page() {
         if ( ! ISXM_File_Manager_Access::can( 'view' ) ) return;
-        $admin = current_user_can( 'manage_options' );
+        $admin = ISXM_File_Manager_Access::is_full_admin();
         ?>
         <div class="isxs-wrap isxs-fm" id="isxs-fm">
             <header class="isxs-header">
@@ -313,7 +316,7 @@ class ISXM_File_Manager_Admin {
         check_ajax_referer( self::NONCE, 'nonce' );
         $op      = isset( $_POST['op'] ) ? sanitize_key( $_POST['op'] ) : '';
         $allowed = in_array( $op, [ 'save_access', 'compress' ], true )
-            ? current_user_can( 'manage_options' )
+            ? ISXM_File_Manager_Access::is_full_admin()
             : isset( self::OP_ACTION[ $op ] ) && ISXM_File_Manager_Access::can( self::OP_ACTION[ $op ] );
         if ( ! $allowed ) wp_send_json_error( [ 'code' => 'isxfm_denied', 'message' => __( 'You do not have permission to do this.', 'insightx-allhub' ) ], 403 );
         $fs   = $this->fs();

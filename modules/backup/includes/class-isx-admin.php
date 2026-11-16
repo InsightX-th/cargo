@@ -811,6 +811,8 @@ class ISX_Admin {
 			ISX_Logger::log_debug( 'system', __( 'Loopback arrived', 'insightx-backup' ), array( 'job' => $job->id() ) );
 		}
 
+		self::authorize_import_start( $job );
+
 		$result = self::run_step( $job );
 
 		if ( ! empty( $result['error'] ) ) {
@@ -1558,6 +1560,8 @@ class ISX_Admin {
 			wp_send_json_error( array( 'message' => __( 'Invalid secret', 'insightx-backup' ) ) );
 		}
 
+		self::authorize_import_start( $job );
+
 		$password = isset( $_POST['password'] ) ? (string) wp_unslash( $_POST['password'] ) : '';
 		if ( $password === '' ) {
 			wp_send_json_error( array( 'message' => __( 'Please enter the password', 'insightx-backup' ) ) );
@@ -2246,6 +2250,8 @@ class ISX_Admin {
 
 	public static function ajax_storage_dir_save() {
 		self::guard( 'export' );
+		// Writes .htaccess/index.php into the chosen folder: admin only.
+		self::require_admin( 'isx_storage_dir_save' );
 
 		$path = isset( $_POST['path'] ) ? sanitize_text_field( wp_unslash( $_POST['path'] ) ) : '';
 		$path = untrailingslashit( trim( $path ) );
@@ -2321,16 +2327,30 @@ class ISX_Admin {
 	}
 
 	/**
+	 * Second gate after guard() for settings that reach past the backups
+	 * themselves: where the server writes .htaccess files, which host it sends
+	 * requests to, whether backups are served by URL. 'export' can be granted
+	 * to non-admin roles; these stay with administrators.
+	 *
+	 * @param string $action For the log entry.
+	 * @return void
+	 */
+	private static function require_admin( $action ) {
+		if ( current_user_can( self::cap( 'manage_options' ) ) ) {
+			return;
+		}
+		ISX_Logger::log_warn( 'system', __( 'AJAX request rejected: permission denied', 'insightx-backup' ), array( 'action' => $action, 'cap' => 'manage_options' ) );
+		wp_send_json_error( array( 'message' => __( 'Permission denied', 'insightx-backup' ) ) );
+	}
+
+	/**
 	 * Switch direct (web-server) backup links on or off — see
 	 * ISX_Backups::direct_download(). Admin-only rather than 'export': it
 	 * decides whether every backup on disk is reachable by URL alone.
 	 */
 	public static function ajax_direct_download_save() {
 		self::guard( 'export' );
-		if ( ! current_user_can( self::cap( 'manage_options' ) ) ) {
-			ISX_Logger::log_warn( 'system', __( 'AJAX request rejected: permission denied', 'insightx-backup' ), array( 'action' => 'isx_direct_download_save', 'cap' => 'manage_options' ) );
-			wp_send_json_error( array( 'message' => __( 'Permission denied', 'insightx-backup' ) ) );
-		}
+		self::require_admin( 'isx_direct_download_save' );
 
 		$enabled = ! empty( $_POST['enabled'] ) && $_POST['enabled'] !== '0'; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard()
 		update_option( 'isx_direct_download', $enabled );
@@ -2449,6 +2469,9 @@ class ISX_Admin {
 
 	public static function ajax_storage_save() {
 		self::guard( 'export' );
+		// The endpoint is requested server-side (test_connection runs right
+		// away): letting a non-admin choose it is SSRF into the site's network.
+		self::require_admin( 'isx_storage_save' );
 
 		$slug = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) ) : '';
 		if ( ! isset( ISX_Destinations::providers()[ $slug ] ) ) {
@@ -2693,6 +2716,41 @@ class ISX_Admin {
 		$user = wp_get_current_user();
 		if ( ! $user->exists() || ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
 			wp_send_json_error( array( 'message' => __( 'Incorrect password', 'insightx-backup' ) ) );
+		}
+	}
+
+	/**
+	 * The job secret alone authorizes the secret-gated runners because an
+	 * import replaces wp_users mid-run. It used to authorize the START of an
+	 * import too: a job staged by someone who later lost 'import' (or after
+	 * DISALLOW_FILE_MODS was defined) still ran from a logged-out request.
+	 * DISALLOW_FILE_MODS is a constant, so it is re-checked on every import
+	 * step. Before the first step has run (no heartbeat yet, the WP session is
+	 * still intact) the request must come from the job's creator, who must
+	 * still hold import rights.
+	 *
+	 * @param ISX_Job $job
+	 * @return void
+	 */
+	private static function authorize_import_start( ISX_Job $job ) {
+		if ( $job->get( 'type' ) !== 'import' ) {
+			return;
+		}
+		if ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS ) {
+			ISX_Logger::log_warn( 'import', __( 'Import step refused: file modifications are disabled (DISALLOW_FILE_MODS)', 'insightx-backup' ), array( 'job' => $job->id() ) );
+			wp_send_json_error( array( 'message' => __( 'File modifications are disabled on this site (DISALLOW_FILE_MODS), so import and reset are not available', 'insightx-backup' ) ) );
+		}
+		if ( $job->get( 'heartbeat' ) ) {
+			return; // Already started under a checked principal.
+		}
+		$creator = (int) $job->get( 'creator', 0 );
+		$user    = get_current_user_id();
+		$allowed = $user > 0
+			&& ( $creator === 0 || $creator === $user )
+			&& ( is_multisite() ? current_user_can( self::cap( 'import' ) ) : ( current_user_can( 'import' ) || current_user_can( 'manage_options' ) ) );
+		if ( ! $allowed ) {
+			ISX_Logger::log_warn( 'import', __( 'Import start refused: the request is not from the job creator with import rights', 'insightx-backup' ), array( 'job' => $job->id(), 'user' => $user ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied', 'insightx-backup' ) ) );
 		}
 	}
 

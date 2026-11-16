@@ -51,4 +51,19 @@ check( 'the default folder check accepts an existing folder', ISXM_File_Manager_
 check( '…and rejects one that does not exist', ISXM_File_Manager_Access::sanitize( [ 'roles' => [ 'editor' => [ 'actions' => [ 'view' ], 'root' => 'nope' ] ] ], [ 'editor' ] )['roles'] === [] );
 check( '…and rejects ../', ISXM_File_Manager_Access::sanitize( [ 'roles' => [ 'editor' => [ 'actions' => [ 'view' ], 'root' => '../' ] ] ], [ 'editor' ] )['roles'] === [] );
 
+group( 'Multisite: a site administrator is not a full File Manager admin' );
+function is_multisite() { return ! empty( $GLOBALS['ms'] ); }
+function is_super_admin( $id ) { return ! empty( $GLOBALS['super'][ $id ] ); }
+function user_can( $user, $cap ) { return in_array( $cap, $user->caps, true ); }
+$site_admin  = (object) [ 'ID' => 5, 'roles' => [ 'administrator' ], 'caps' => [ 'manage_options' ] ];
+$super_admin = (object) [ 'ID' => 1, 'roles' => [ 'administrator' ], 'caps' => [ 'manage_options' ] ];
+$GLOBALS['super'] = [ 1 => true ];
+$GLOBALS['ms'] = false;
+check( 'single site: manage_options is full admin', ISXM_File_Manager_Access::is_full_admin( $site_admin ) );
+$GLOBALS['ms'] = true;
+check( 'multisite: a site administrator is not', ! ISXM_File_Manager_Access::is_full_admin( $site_admin ) );
+check( 'multisite: a super admin is', ISXM_File_Manager_Access::is_full_admin( $super_admin ) );
+check( 'multisite: the site admin then gets only the role rules (none for administrator)', $r( [ 'administrator' ], ISXM_File_Manager_Access::is_full_admin( $site_admin ) ) === [ 'actions' => [], 'root' => '' ] );
+$GLOBALS['ms'] = false;
+
 finish();

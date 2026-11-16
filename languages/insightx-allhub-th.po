@@ -2379,3 +2379,7 @@ msgstr "คู่มือการใช้งาน"
 
 msgid "InsightX Offload is now InsightX AllHub. Deactivate and delete InsightX Offload — AllHub starts on the next page load with all your settings, offloaded files and backups."
 msgstr "InsightX Offload เปลี่ยนชื่อเป็น InsightX AllHub แล้ว ปิดและลบ InsightX Offload ได้เลย AllHub จะเริ่มทำงานตอนโหลดหน้าถัดไป พร้อมการตั้งค่า ไฟล์ที่ offload แล้ว และข้อมูลสำรองเดิมทั้งหมด"
+
+#: includes/class-isxm-tools.php
+msgid "Only a network administrator can choose server folders on a multisite network"
+msgstr "บนเครือข่าย multisite เฉพาะผู้ดูแลเครือข่ายเท่านั้นที่เลือกโฟลเดอร์บนเซิร์ฟเวอร์ได้"
