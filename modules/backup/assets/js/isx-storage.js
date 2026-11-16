@@ -408,6 +408,38 @@
 		});
 	})();
 
+	/* ================= Storage settings page: direct download links ================= */
+
+	(function directDownloadBlock() {
+		var $button = $('#isx-direct-download-save');
+		if (!$button.length) {
+			return;
+		}
+
+		$button.on('click', function (event) {
+			event.preventDefault();
+			var $status = $('#isx-direct-download-status');
+			var enabled = $('#isx-direct-download-enabled').is(':checked');
+
+			$button.prop('disabled', true);
+			$status.text(t('Saving...')).removeClass('is-ok is-error');
+
+			ISX.post('isx_direct_download_save', { enabled: enabled ? 1 : 0 })
+				.done(function (res) {
+					$button.prop('disabled', false);
+					if (res && res.success) {
+						$status.text(res.data.message).removeClass('is-error').addClass('is-ok');
+					} else {
+						$status.text((res && res.data && res.data.message) || t('Could not save')).removeClass('is-ok').addClass('is-error');
+					}
+				})
+				.fail(function () {
+					$button.prop('disabled', false);
+					$status.text(t('Could not save')).removeClass('is-ok').addClass('is-error');
+				});
+		});
+	})();
+
 	/* ================= Storage settings page: scheduled backup ================= */
 
 	(function scheduleBlock() {

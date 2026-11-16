@@ -162,6 +162,38 @@ class ISX_Job {
 	}
 
 	/**
+	 * The live job of $type, if one is running right now.
+	 *
+	 * Lets callers refuse to start a second export on top of one that is
+	 * already packing the site — a lost isx_export_start response retried by
+	 * the browser, a second tab, or the scheduled backup firing off WP-Cron
+	 * mid-export each used to produce a second full archive alongside the
+	 * first. "Live" = not done, not cancelled, and touched (heartbeat, or
+	 * creation for a job that has not run a step yet) within $max_idle
+	 * seconds, so a dead job never blocks the next export for long.
+	 *
+	 * @param string $type     export|import
+	 * @param int    $max_idle Seconds since the last heartbeat.
+	 * @return ISX_Job|null
+	 */
+	public static function running( $type, $max_idle ) {
+		foreach ( self::search_paths() as $base ) {
+			$dirs = glob( untrailingslashit( $base ) . '/isx_*', GLOB_ONLYDIR );
+			foreach ( $dirs ? $dirs : array() as $dir ) {
+				$job = self::load( basename( $dir ) );
+				if ( $job === null || $job->get( 'type' ) !== $type || $job->get( 'step' ) === 'done' || $job->is_cancel_requested() ) {
+					continue;
+				}
+				$last = (int) $job->get( 'heartbeat', (int) $job->get( 'created', 0 ) );
+				if ( time() - $last < $max_idle ) {
+					return $job;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Whether this job's directory is still on disk, regardless of whether its
 	 * state can be read.
 	 *

@@ -45,6 +45,27 @@ $isx_schedule  = wp_parse_args(
 			</div>
 		</div>
 
+		<?php if ( current_user_can( is_multisite() ? 'manage_network_options' : 'manage_options' ) ) : ?>
+		<div class="isx-provider-block" id="isx-direct-download-block">
+			<div class="isx-provider-head">
+				<span class="isx-provider-head-main">
+					<span class="dashicons dashicons-download"></span>
+					<span class="isx-provider-title"><?php esc_html_e( 'Direct download links', 'insightx-backup' ); ?></span>
+				</span>
+			</div>
+			<p class="isx-muted"><?php esc_html_e( 'By default backups download through a permission-checked page that streams the file with PHP. Some hosts cut off a multi-GB download part-way (timeout), which leaves you with a broken or "admin-ajax.html" file. Turn this on to let the web server send the file itself — faster, and an interrupted download can resume', 'insightx-backup' ); ?></p>
+			<label class="isx-field-checkbox">
+				<input type="checkbox" id="isx-direct-download-enabled" <?php checked( (bool) get_option( 'isx_direct_download', false ) ); ?> />
+				<span><?php esc_html_e( 'Download backups by direct link', 'insightx-backup' ); ?></span>
+			</label>
+			<p class="isx-field-hint"><span class="dashicons dashicons-warning"></span> <?php esc_html_e( 'Anyone who gets a backup\'s URL (browser history, server or CDN logs) can download the whole site without logging in — only the random part of the file name protects it. On nginx the folder must also be allowed in the server config. Turn it back off once the download is done', 'insightx-backup' ); ?></p>
+			<div class="isx-actions">
+				<button type="button" class="button button-primary isx-btn" id="isx-direct-download-save"><?php esc_html_e( 'Save', 'insightx-backup' ); ?></button>
+				<span class="isx-save-status" id="isx-direct-download-status" aria-live="polite"></span>
+			</div>
+		</div>
+		<?php endif; ?>
+
 		<div class="isx-provider-block" id="isx-schedule-block">
 			<div class="isx-provider-head">
 				<span class="isx-provider-head-main">

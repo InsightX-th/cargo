@@ -2043,3 +2043,43 @@ msgstr "ที่เก็บ: %s"
 msgid "%d backup"
 msgid_plural "%d backups"
 msgstr[0] "ข้อมูลสำรอง %d รายการ"
+
+#: includes/class-isx-admin.php
+msgid "An export is already running — following it instead of starting another"
+msgstr "มีการส่งออกที่กำลังทำอยู่แล้ว — ติดตามงานนั้นแทนการเริ่มใหม่"
+
+#: includes/class-isx-admin.php
+msgid "Automatic backup skipped — another export is already running"
+msgstr "ข้ามการสำรองอัตโนมัติรอบนี้ — มีการส่งออกอื่นกำลังทำอยู่"
+
+#: includes/class-isx-admin.php
+msgid "Direct backup download links enabled"
+msgstr "เปิดลิงก์ดาวน์โหลดข้อมูลสำรองแบบตรงแล้ว"
+
+#: includes/class-isx-admin.php
+msgid "Direct backup download links disabled"
+msgstr "ปิดลิงก์ดาวน์โหลดข้อมูลสำรองแบบตรงแล้ว"
+
+#: includes/class-isx-admin.php
+msgid "Saved — backups now download by direct link"
+msgstr "บันทึกแล้ว — ตอนนี้ดาวน์โหลดข้อมูลสำรองผ่านลิงก์ตรง"
+
+#: includes/class-isx-admin.php
+msgid "Saved — backups download through the permission-checked page only"
+msgstr "บันทึกแล้ว — ดาวน์โหลดข้อมูลสำรองผ่านหน้าที่ตรวจสิทธิ์เท่านั้น"
+
+#: views/settings.php
+msgid "Direct download links"
+msgstr "ลิงก์ดาวน์โหลดตรง"
+
+#: views/settings.php
+msgid "By default backups download through a permission-checked page that streams the file with PHP. Some hosts cut off a multi-GB download part-way (timeout), which leaves you with a broken or \"admin-ajax.html\" file. Turn this on to let the web server send the file itself — faster, and an interrupted download can resume"
+msgstr "ปกติข้อมูลสำรองจะดาวน์โหลดผ่านหน้าที่ตรวจสิทธิ์ แล้วให้ PHP ส่งไฟล์ให้ บางโฮสต์ตัดการดาวน์โหลดไฟล์หลาย GB กลางทาง (timeout) ทำให้ได้ไฟล์เสียหรือไฟล์ \"admin-ajax.html\" เปิดตัวเลือกนี้เพื่อให้ web server ส่งไฟล์เอง — เร็วกว่า และโหลดต่อจากที่ค้างได้"
+
+#: views/settings.php
+msgid "Download backups by direct link"
+msgstr "ดาวน์โหลดข้อมูลสำรองผ่านลิงก์ตรง"
+
+#: views/settings.php
+msgid "Anyone who gets a backup's URL (browser history, server or CDN logs) can download the whole site without logging in — only the random part of the file name protects it. On nginx the folder must also be allowed in the server config. Turn it back off once the download is done"
+msgstr "ใครได้ URL ของไฟล์สำรอง (จากประวัติเบราว์เซอร์ หรือ log ของ server/CDN) จะโหลดทั้งเว็บไปได้โดยไม่ต้อง login — มีแค่ส่วนที่สุ่มในชื่อไฟล์ที่ช่วยป้องกัน บน nginx ต้องอนุญาตโฟลเดอร์นี้ใน config ของ server ด้วย โหลดเสร็จแล้วควรปิดกลับ"

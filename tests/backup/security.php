@@ -87,6 +87,7 @@ $guarded = array(
 	'isx_export_start' => 'export', 'isx_list_tables' => 'export', 'isx_download' => 'export', 'isx_log_poll' => 'export',
 	'isx_backups_list' => 'export', 'isx_backups_delete' => 'export', 'isx_backups_list_content' => 'export', 'isx_backups_verify' => 'export',
 	'isx_storage_save' => 'export', 'isx_storage_dir_save' => 'export', 'isx_schedule_save' => 'export', 'isx_cleanup_uploads' => 'export',
+	'isx_direct_download_save' => 'export', // + manage_options, see H9
 	'isx_import_create' => 'import', 'isx_import_chunk' => 'import', 'isx_backups_restore' => 'import',
 	'isx_storage_import_list' => 'import', 'isx_storage_import_prepare' => 'import',
 	'isx_reset_run' => 'manage_options',
@@ -97,7 +98,7 @@ $by_secret = array( 'isx_run', 'isx_job_cancel', 'isx_import_decrypt' );
 $by_nonce  = array( 'isx_client_log' );          // log lines only
 $by_token  = array( 'isx_reset_password_reveal' ); // one-time token + capability
 
-t( 'A1 26 handlers registered, every one of them classified here', count( $mm ) === 26 && ! array_diff( array_keys( $actions ), array_merge( array_keys( $guarded ), $by_secret, $by_nonce, $by_token ) ), json_encode( array_diff( array_keys( $actions ), array_merge( array_keys( $guarded ), $by_secret, $by_nonce, $by_token ) ) ) );
+t( 'A1 27 handlers registered, every one of them classified here', count( $mm ) === 27 && ! array_diff( array_keys( $actions ), array_merge( array_keys( $guarded ), $by_secret, $by_nonce, $by_token ) ), json_encode( array_diff( array_keys( $actions ), array_merge( array_keys( $guarded ), $by_secret, $by_nonce, $by_token ) ) ) );
 sort( $nopriv );
 t( 'A2 only the job runner, cancel and client log are open to logged-out requests', $nopriv === array( 'isx_client_log', 'isx_job_cancel', 'isx_run' ), json_encode( $nopriv ) );
 foreach ( $guarded as $action => $cap ) {
@@ -310,6 +311,7 @@ file_put_contents( "$dir/backups/shop-01012026-AbCdEfGhIjKlMnOp.wpress", "pkg" )
 function wp_mkdir_p( $d ) { return is_dir( $d ) || mkdir( $d, 0777, true ); }
 function isx_htaccess_deny_all() { return "x"; }
 function __( $t ) { return $t; }
+function get_option( $k, $d = false ) { return $d; }
 function apply_filters( $t, $v ) { return $v; }
 require ' . var_export( $MODULE . '/includes/class-isx-backups.php', true ) . ';
 $r = [];
@@ -327,6 +329,11 @@ t( 'H4 a real backup resolves inside the backups folder', is_array( $r ) && $r['
 $dl = isx_method_body( $ADMIN, 'ajax_download' );
 t( 'H5 download is a guarded GET and serves only what ISX_Backups::path() resolved', false !== ( $gp = strpos( $dl, "self::guard( 'export', true )" ) ) && false !== ( $pp = strpos( $dl, 'ISX_Backups::path( $name )' ) ) && $gp < $pp && strpos( $dl, 'if ( $path === null )' ) !== false );
 t( 'H6 the served file name is the basename only (no header injection via path)', strpos( $dl, '$filename = basename( $path );' ) !== false );
+t( 'H7 refusals render as an error page, not a saved "admin-ajax.html"', false !== ( $fp = strpos( $dl, "'wp_die_ajax_handler'" ) ) && $fp < $gp && strpos( $dl, "'response' => 404" ) !== false );
+$views = file_get_contents( $MODULE . '/views/backups.php' ) . file_get_contents( $MODULE . '/views/reset-hub.php' );
+t( 'H8 download links carry no "download" attribute (it saves error bodies as files)', strpos( $views, 'isx_download' ) !== false && strpos( $views, 'role="menuitem" download' ) === false );
+$dds = isx_method_body( $ADMIN, 'ajax_direct_download_save' );
+t( 'H9 the direct-link switch needs a nonce and manage_options, not just export', strpos( $dds, "self::guard( 'export' )" ) !== false && strpos( $dds, "current_user_can( self::cap( 'manage_options' ) )" ) !== false );
 
 echo "\n========================================\nTOTAL: $pass passed, $fail failed\n";
 exit( $fail ? 1 : 0 );

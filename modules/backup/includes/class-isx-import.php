@@ -974,10 +974,15 @@ class ISX_Import {
 	 * reaches, so these few are put back right after each batch that touched
 	 * wp_options.
 	 *
+	 * isx_direct_download rides along for a different reason: unlike the
+	 * snapshot restore, this list is also *removed* when the target never had
+	 * it, so a package from a site that served backups by direct link cannot
+	 * switch that on here and leave this site's backups reachable by URL.
+	 *
 	 * @return string[]
 	 */
 	private static function locator_options() {
-		return array( 'isx_storage_path', 'isx_log_key', 'isx_storage_migrated' );
+		return array( 'isx_storage_path', 'isx_log_key', 'isx_storage_migrated', 'isx_direct_download' );
 	}
 
 	/**

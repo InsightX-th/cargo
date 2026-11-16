@@ -113,6 +113,7 @@ class ISX_Admin {
 
 		add_action( 'wp_ajax_isx_storage_save', array( __CLASS__, 'ajax_storage_save' ) );
 		add_action( 'wp_ajax_isx_storage_dir_save', array( __CLASS__, 'ajax_storage_dir_save' ) );
+		add_action( 'wp_ajax_isx_direct_download_save', array( __CLASS__, 'ajax_direct_download_save' ) );
 		add_action( 'wp_ajax_isx_storage_import_list', array( __CLASS__, 'ajax_storage_import_list' ) );
 		add_action( 'wp_ajax_isx_storage_import_prepare', array( __CLASS__, 'ajax_storage_import_prepare' ) );
 
@@ -575,6 +576,16 @@ class ISX_Admin {
 		// starting another one. Registry-only (no listing call), so this costs
 		// nothing unless there is actually something stranded to clean up.
 		ISX_Export::sweep_orphaned_uploads();
+
+		// One export at a time. A retried start (lost response), a second tab
+		// or the scheduled backup already running each used to start a second
+		// full export and leave two identical archives — follow the running
+		// one instead, which is also what a retry of this very request wants.
+		$running = ISX_Job::running( 'export', self::STALL_LIMIT );
+		if ( $running ) {
+			ISX_Logger::log_info( 'export', __( 'An export is already running — following it instead of starting another', 'insightx-backup' ), array( 'job' => $running->id() ) );
+			wp_send_json_success( array( 'job' => $running->id(), 'secret' => $running->get( 'secret' ) ) );
+		}
 
 		$job = ISX_Job::create( 'export' );
 		if ( ! $job ) {
@@ -1616,12 +1627,23 @@ class ISX_Admin {
 	 * to the web server entirely, where none of these limits apply.
 	 */
 	public static function ajax_download() {
+		// A download is a top-level navigation, but inside admin-ajax.php
+		// wp_die() prints a bare text body — which the browser then saves as
+		// "admin-ajax.html" instead of showing it. Render the normal WordPress
+		// error page for every refusal below (guard() included).
+		add_filter(
+			'wp_die_ajax_handler',
+			static function () {
+				return '_default_wp_die_handler';
+			}
+		);
+
 		self::guard( 'export', true );
 
 		$name = isset( $_GET['backup'] ) ? sanitize_text_field( wp_unslash( $_GET['backup'] ) ) : '';
 		$path = ISX_Backups::path( $name );
 		if ( $path === null ) {
-			wp_die( esc_html__( 'File not found', 'insightx-backup' ) );
+			wp_die( esc_html__( 'File not found', 'insightx-backup' ), '', array( 'response' => 404, 'back_link' => true ) );
 		}
 
 		@set_time_limit( 0 ); // phpcs:ignore
@@ -1681,7 +1703,9 @@ class ISX_Admin {
 
 		$fh = fopen( $path, 'rb' );
 		if ( $fh === false ) {
-			wp_die( esc_html__( 'Could not open the file', 'insightx-backup' ) );
+			header_remove( 'Content-Disposition' );
+			header_remove( 'Content-Length' );
+			wp_die( esc_html__( 'Could not open the file', 'insightx-backup' ), '', array( 'response' => 500, 'back_link' => true ) );
 		}
 		if ( $start > 0 ) {
 			fseek( $fh, (int) $start );
@@ -2297,6 +2321,32 @@ class ISX_Admin {
 	}
 
 	/**
+	 * Switch direct (web-server) backup links on or off — see
+	 * ISX_Backups::direct_download(). Admin-only rather than 'export': it
+	 * decides whether every backup on disk is reachable by URL alone.
+	 */
+	public static function ajax_direct_download_save() {
+		self::guard( 'export' );
+		if ( ! current_user_can( self::cap( 'manage_options' ) ) ) {
+			ISX_Logger::log_warn( 'system', __( 'AJAX request rejected: permission denied', 'insightx-backup' ), array( 'action' => 'isx_direct_download_save', 'cap' => 'manage_options' ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied', 'insightx-backup' ) ) );
+		}
+
+		$enabled = ! empty( $_POST['enabled'] ) && $_POST['enabled'] !== '0'; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in guard()
+		update_option( 'isx_direct_download', $enabled );
+		// Rewrite backups/.htaccess right away (grant ↔ deny-all) rather than
+		// on whichever request next happens to call dir().
+		ISX_Backups::dir();
+		ISX_Logger::log_info( 'system', $enabled ? __( 'Direct backup download links enabled', 'insightx-backup' ) : __( 'Direct backup download links disabled', 'insightx-backup' ), array() );
+
+		wp_send_json_success(
+			array(
+				'message' => $enabled ? __( 'Saved — backups now download by direct link', 'insightx-backup' ) : __( 'Saved — backups download through the permission-checked page only', 'insightx-backup' ),
+			)
+		);
+	}
+
+	/**
 	 * Save the automatic-backup schedule and (re)register its cron event.
 	 * The event itself is registered unconditionally in the main plugin file
 	 * (same reasoning as isx_cron_step — it must fire from wp-cron.php, which
@@ -2347,6 +2397,15 @@ class ISX_Admin {
 	public static function run_scheduled_backup() {
 		$schedule = (array) get_option( 'isx_schedule', array() );
 		if ( empty( $schedule['enabled'] ) ) {
+			return;
+		}
+
+		// WP-Cron fires on any request — including the polls of an export
+		// someone is running by hand — so this used to start a second full
+		// export alongside it and leave two identical backups.
+		$running = ISX_Job::running( 'export', self::STALL_LIMIT );
+		if ( $running ) {
+			ISX_Logger::log_info( 'export', __( 'Automatic backup skipped — another export is already running', 'insightx-backup' ), array( 'job' => $running->id() ) );
 			return;
 		}
 

@@ -4,7 +4,7 @@ Tags: offload, s3, minio, cloudflare r2, digitalocean spaces, cdn, migrate, medi
 Requires at least: 5.8
 Tested up to: 7.1.2
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -89,7 +89,7 @@ Secret Key ใช้ AES-256-GCM เมื่อ OpenSSL รองรับ แ�
 
 = ไฟล์สำรองเปิดจากเว็บได้ไหม? =
 
-ไม่ได้ โฟลเดอร์ wp-content/insightx-backup ปิดด้วย .htaccess และดาวน์โหลดผ่านหน้า Backup ที่ตรวจสิทธิ์เท่านั้น บน nginx ให้เพิ่ม `location ^~ /wp-content/insightx-backup/ { deny all; }` เอง ถ้าโฮสต์ตัดการดาวน์โหลดไฟล์ใหญ่กลางทาง เปิดลิงก์ตรงคืนได้ด้วย filter `isx_direct_download`
+ไม่ได้ โฟลเดอร์ wp-content/insightx-backup ปิดด้วย .htaccess และดาวน์โหลดผ่านหน้า Backup ที่ตรวจสิทธิ์เท่านั้น บน nginx ให้เพิ่ม `location ^~ /wp-content/insightx-backup/ { deny all; }` เอง ถ้าโฮสต์ตัดการดาวน์โหลดไฟล์ใหญ่กลางทาง (ได้ไฟล์ admin-ajax.html) เปิดลิงก์ตรงได้ที่ สำรองข้อมูล → ตั้งค่า Storage → ลิงก์ดาวน์โหลดตรง หรือใช้ filter `isx_direct_download` โหลดเสร็จแล้วควรปิดกลับ
 
 = ใช้ปลั๊กอิน InsightX Backup อยู่แล้ว ต้องทำอะไร? =
 

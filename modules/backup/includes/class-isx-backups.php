@@ -77,13 +77,14 @@ class ISX_Backups {
 	/**
 	 * Opt-in: let the web server hand out backups by direct link, protected
 	 * only by the filename's random suffix. For hosts where streaming a large
-	 * file through PHP times out:
+	 * file through PHP times out. Switched on from Storage Settings (option
+	 * isx_direct_download) or in code:
 	 *   add_filter( 'isx_direct_download', '__return_true' );
 	 *
 	 * @return bool
 	 */
 	public static function direct_download() {
-		return (bool) apply_filters( 'isx_direct_download', false );
+		return (bool) apply_filters( 'isx_direct_download', (bool) get_option( 'isx_direct_download', false ) );
 	}
 
 	/**

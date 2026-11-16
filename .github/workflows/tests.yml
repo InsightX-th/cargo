@@ -97,6 +97,9 @@ jobs:
       - name: Backup module security
         run: php tests/backup/security.php
 
+      - name: Backup job single-flight
+        run: php tests/backup/job.php
+
       - name: Rename guard (old InsightX Offload)
         run: php tests/rename.php
 

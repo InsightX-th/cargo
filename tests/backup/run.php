@@ -474,7 +474,7 @@ class ISX_Test_Options_DB {
 }
 $GLOBALS['wpdb'] = new ISX_Test_Options_DB();
 // State right after the package's wp_options landed: the SOURCE's values.
-$GLOBALS['wpdb']->rows = array( 'isx_storage_path' => '/source/site/storage', 'isx_log_key' => 'SOURCEKEY', 'blogname' => 'Source' );
+$GLOBALS['wpdb']->rows = array( 'isx_storage_path' => '/source/site/storage', 'isx_log_key' => 'SOURCEKEY', 'isx_direct_download' => '1', 'blogname' => 'Source' );
 // The target's own pre-import snapshot: custom storage path, no log key yet.
 file_put_contents( ( new ISX_Job() )->preserved_options(), json_encode( array( 'isx_storage_path' => base64_encode( '/home/u/isx-storage' ), 'isx_foo' => base64_encode( 'x' ) ) ) );
 $m = new ReflectionMethod( 'ISX_Import', 'reassert_locator_options' );
@@ -485,6 +485,7 @@ $m->invoke( null, new ISX_Job() );
 $rows = $GLOBALS['wpdb']->rows;
 t( 'B5a target storage path put back immediately', $rows['isx_storage_path'] === '/home/u/isx-storage' );
 t( 'B5b a locator option the target never had is removed', ! isset( $rows['isx_log_key'] ) );
+t( 'B5d the source site\'s direct-link switch never turns it on here', ! isset( $rows['isx_direct_download'] ) );
 t( 'B5c everything else in wp_options is left to the import', $rows['blogname'] === 'Source' && ! isset( $rows['isx_foo'] ) );
 @unlink( ( new ISX_Job() )->preserved_options() );
 unset( $GLOBALS['wpdb'] );
@@ -689,6 +690,20 @@ file_put_contents( "$bdir/.htaccess", "Require all granted\n" ); // what earlier
 ISX_Backups::dir();
 t( 'K5 backups dir is deny-all by default (old granting rule replaced)', file_get_contents( "$bdir/.htaccess" ) === isx_htaccess_deny_all() );
 t( 'K6 no direct link is handed out by default', ISX_Backups::base_url() === null && ISX_Backups::url( 'x.wpress' ) === null );
+if ( ! function_exists( 'trailingslashit' ) ) {
+	function trailingslashit( $s ) { return untrailingslashit( $s ) . '/'; }
+}
+if ( ! function_exists( 'content_url' ) ) {
+	function content_url( $p = '' ) { return 'https://example.test/wp-content' . $p; }
+}
+update_option( 'isx_direct_download', true );
+$dl = ISX_Backups::url( 'x.wpress' );
+t( 'K7 the Storage Settings switch hands out a direct link', is_string( $dl ) && substr( $dl, 0, 31 ) === 'https://example.test/wp-content' && substr( $dl, -17 ) === '/backups/x.wpress', (string) $dl );
+ISX_Backups::dir();
+t( 'K8 …and grants the backups dir instead of deny-all', strpos( file_get_contents( "$bdir/.htaccess" ), 'Require all granted' ) !== false );
+update_option( 'isx_direct_download', false );
+ISX_Backups::dir();
+t( 'K9 switching it off restores deny-all and drops the link', file_get_contents( "$bdir/.htaccess" ) === isx_htaccess_deny_all() && ISX_Backups::url( 'x.wpress' ) === null );
 
 // ---------- stubs used by the groups below (real classes, no WordPress) ----------
 if ( ! class_exists( 'WP_Error' ) ) {

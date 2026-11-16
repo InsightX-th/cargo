@@ -107,7 +107,7 @@ $isx_reset_tools = array(
 													? $isx_backup['url']
 													: admin_url( 'admin-ajax.php?action=isx_download&backup=' . rawurlencode( $isx_backup['name'] ) . '&nonce=' . wp_create_nonce( ISX_Admin::NONCE ) );
 												?>
-												<a tabindex="-1" href="<?php echo esc_url( $isx_dl_url ); ?>" role="menuitem" download>
+												<a tabindex="-1" href="<?php echo esc_url( $isx_dl_url ); ?>" role="menuitem">
 													<span class="dashicons dashicons-download"></span>
 													<span><?php esc_html_e( 'Download', 'insightx-backup' ); ?></span>
 												</a>
