@@ -1,6 +1,6 @@
 <?php
 /**
- * InsightX AllHub → File Manager: the page, its AJAX endpoint and
+ * Cargo → File Manager: the page, its AJAX endpoint and
  * downloads. Every file operation is ISXM_File_Manager's; this class only
  * checks who is asking and turns requests into calls.
  */
@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class ISXM_File_Manager_Admin {
 
-    const SLUG  = 'insightx-allhub-files';
+    const SLUG  = 'cargo-files';
     const NONCE = 'isxs_fm';
 
     private $hook = '';
@@ -23,12 +23,12 @@ class ISXM_File_Manager_Admin {
 
     public function register_menu() {
         if ( ISXM_File_Manager_Access::is_full_admin() ) {
-            $this->hook = (string) add_submenu_page( ISXM_Admin::PAGE_SLUG, __( 'File Manager', 'insightx-allhub' ), __( 'File Manager', 'insightx-allhub' ), 'manage_options', self::SLUG, [ $this, 'render_page' ] );
+            $this->hook = (string) add_submenu_page( ISXM_Admin::PAGE_SLUG, __( 'File Manager', 'cargo' ), __( 'File Manager', 'cargo' ), 'manage_options', self::SLUG, [ $this, 'render_page' ] );
         } elseif ( ISXM_File_Manager_Access::can( 'view' ) ) {
             // Everyone else given access sees File Manager on its own — never
             // the Offload settings. The page and every request check access
             // themselves; "read" only gets the menu item drawn.
-            $this->hook = (string) add_menu_page( __( 'File Manager', 'insightx-allhub' ), __( 'File Manager', 'insightx-allhub' ), 'read', self::SLUG, [ $this, 'render_page' ], 'dashicons-portfolio', 77 );
+            $this->hook = (string) add_menu_page( __( 'File Manager', 'cargo' ), __( 'File Manager', 'cargo' ), 'read', self::SLUG, [ $this, 'render_page' ], 'dashicons-portfolio', 77 );
         }
     }
 
@@ -63,134 +63,134 @@ class ISXM_File_Manager_Admin {
             'can'         => $rules['actions'],
             'access'      => $admin ? $this->access_data() : null,
             'i18n'        => [
-                'root'          => __( 'WordPress', 'insightx-allhub' ),
-                'name'          => __( 'Name', 'insightx-allhub' ),
-                'size'          => __( 'Size', 'insightx-allhub' ),
-                'modified'      => __( 'Modified', 'insightx-allhub' ),
-                'empty'         => __( 'This folder is empty. Drop files here to upload.', 'insightx-allhub' ),
-                'loading'       => __( 'Loading…', 'insightx-allhub' ),
-                'readOnly'      => __( 'View only: this location holds the site\'s code.', 'insightx-allhub' ),
-                'newFolder'     => __( 'New folder', 'insightx-allhub' ),
-                'folderName'    => __( 'Folder name', 'insightx-allhub' ),
-                'newFile'       => __( 'New file', 'insightx-allhub' ),
-                'fileName'      => __( 'File name, e.g. readme.txt', 'insightx-allhub' ),
-                'fileCreated'   => __( 'File created', 'insightx-allhub' ),
-                'rename'        => __( 'Rename', 'insightx-allhub' ),
-                'newName'       => __( 'New name', 'insightx-allhub' ),
-                'moveTo'        => __( 'Move to', 'insightx-allhub' ),
-                'moveHere'      => __( 'Move here', 'insightx-allhub' ),
-                'delete'        => __( 'Delete', 'insightx-allhub' ),
+                'root'          => __( 'WordPress', 'cargo' ),
+                'name'          => __( 'Name', 'cargo' ),
+                'size'          => __( 'Size', 'cargo' ),
+                'modified'      => __( 'Modified', 'cargo' ),
+                'empty'         => __( 'This folder is empty. Drop files here to upload.', 'cargo' ),
+                'loading'       => __( 'Loading…', 'cargo' ),
+                'readOnly'      => __( 'View only: this location holds the site\'s code.', 'cargo' ),
+                'newFolder'     => __( 'New folder', 'cargo' ),
+                'folderName'    => __( 'Folder name', 'cargo' ),
+                'newFile'       => __( 'New file', 'cargo' ),
+                'fileName'      => __( 'File name, e.g. readme.txt', 'cargo' ),
+                'fileCreated'   => __( 'File created', 'cargo' ),
+                'rename'        => __( 'Rename', 'cargo' ),
+                'newName'       => __( 'New name', 'cargo' ),
+                'moveTo'        => __( 'Move to', 'cargo' ),
+                'moveHere'      => __( 'Move here', 'cargo' ),
+                'delete'        => __( 'Delete', 'cargo' ),
                 /* translators: %d: number of selected items. */
-                'deleteAsk'     => __( 'Delete %d item(s)? Folders are deleted with everything in them. This cannot be undone.', 'insightx-allhub' ),
-                'cancel'        => __( 'Cancel', 'insightx-allhub' ),
-                'save'          => __( 'Save', 'insightx-allhub' ),
-                'replace'       => __( 'Replace', 'insightx-allhub' ),
-                'skip'          => __( 'Skip', 'insightx-allhub' ),
-                'replaceAsk'    => __( 'These files already exist. Replace them?', 'insightx-allhub' ),
+                'deleteAsk'     => __( 'Delete %d item(s)? Folders are deleted with everything in them. This cannot be undone.', 'cargo' ),
+                'cancel'        => __( 'Cancel', 'cargo' ),
+                'save'          => __( 'Save', 'cargo' ),
+                'replace'       => __( 'Replace', 'cargo' ),
+                'skip'          => __( 'Skip', 'cargo' ),
+                'replaceAsk'    => __( 'These files already exist. Replace them?', 'cargo' ),
                 /* translators: %s: maximum upload size, e.g. 64 MB. */
-                'tooBig'        => __( 'Larger than the server allows (%s)', 'insightx-allhub' ),
-                'uploaded'      => __( 'Uploaded', 'insightx-allhub' ),
-                'created'       => __( 'Folder created', 'insightx-allhub' ),
-                'renamed'       => __( 'Renamed', 'insightx-allhub' ),
-                'moved'         => __( 'Moved', 'insightx-allhub' ),
-                'deleted'       => __( 'Deleted', 'insightx-allhub' ),
-                'onBucket'      => __( 'On the bucket', 'insightx-allhub' ),
-                'failed'        => __( 'Request failed. Please try again.', 'insightx-allhub' ),
-                'perm'          => __( 'Permissions', 'insightx-allhub' ),
-                'kind'          => __( 'Kind', 'insightx-allhub' ),
-                'readWrite'     => __( 'read and write', 'insightx-allhub' ),
-                'readOnlyShort' => __( 'read only', 'insightx-allhub' ),
+                'tooBig'        => __( 'Larger than the server allows (%s)', 'cargo' ),
+                'uploaded'      => __( 'Uploaded', 'cargo' ),
+                'created'       => __( 'Folder created', 'cargo' ),
+                'renamed'       => __( 'Renamed', 'cargo' ),
+                'moved'         => __( 'Moved', 'cargo' ),
+                'deleted'       => __( 'Deleted', 'cargo' ),
+                'onBucket'      => __( 'On the bucket', 'cargo' ),
+                'failed'        => __( 'Request failed. Please try again.', 'cargo' ),
+                'perm'          => __( 'Permissions', 'cargo' ),
+                'kind'          => __( 'Kind', 'cargo' ),
+                'readWrite'     => __( 'read and write', 'cargo' ),
+                'readOnlyShort' => __( 'read only', 'cargo' ),
                 /* translators: %s: destination, e.g. "Cloudflare R2 · bucket shop". */
-                'deleteBucket'  => __( 'Files on %s are deleted too; links to them will stop working.', 'insightx-allhub' ),
+                'deleteBucket'  => __( 'Files on %s are deleted too; links to them will stop working.', 'cargo' ),
                 'destination'   => ISXM_Tools::destination_label(),
-                'kindFolder'    => __( 'Folder', 'insightx-allhub' ),
+                'kindFolder'    => __( 'Folder', 'cargo' ),
                 /* translators: %s: file extension in capitals, e.g. PDF. */
-                'kindFile'      => __( '%s file', 'insightx-allhub' ),
-                'kindNone'      => __( 'File', 'insightx-allhub' ),
+                'kindFile'      => __( '%s file', 'cargo' ),
+                'kindNone'      => __( 'File', 'cargo' ),
                 /* translators: 1: number of items, 2: total size. */
-                'items'         => __( '%1$d items, %2$s', 'insightx-allhub' ),
+                'items'         => __( '%1$d items, %2$s', 'cargo' ),
                 /* translators: 1: number of selected items, 2: their size. */
-                'selectedItems' => __( '%1$d selected, %2$s', 'insightx-allhub' ),
+                'selectedItems' => __( '%1$d selected, %2$s', 'cargo' ),
                 /* translators: 1: search text, 2: folder, 3: number of results. */
-                'results'       => __( 'Results for "%1$s" in /%2$s: %3$d', 'insightx-allhub' ),
-                'resultsCut'    => __( '(first results only, narrow the search)', 'insightx-allhub' ),
-                'clear'         => __( 'Clear', 'insightx-allhub' ),
-                'searching'     => __( 'Searching…', 'insightx-allhub' ),
-                'noResults'     => __( 'Nothing found.', 'insightx-allhub' ),
-                'saved'         => __( 'Saved', 'insightx-allhub' ),
-                'choose'        => __( 'Choose', 'insightx-allhub' ),
-                'whole'         => __( 'Whole site', 'insightx-allhub' ),
-                'chooseFolder'  => __( 'Choose folder', 'insightx-allhub' ),
-                'useFolder'     => __( 'Use this folder', 'insightx-allhub' ),
-                'remove'        => __( 'Remove', 'insightx-allhub' ),
-                'role'          => __( 'Role', 'insightx-allhub' ),
+                'results'       => __( 'Results for "%1$s" in /%2$s: %3$d', 'cargo' ),
+                'resultsCut'    => __( '(first results only, narrow the search)', 'cargo' ),
+                'clear'         => __( 'Clear', 'cargo' ),
+                'searching'     => __( 'Searching…', 'cargo' ),
+                'noResults'     => __( 'Nothing found.', 'cargo' ),
+                'saved'         => __( 'Saved', 'cargo' ),
+                'choose'        => __( 'Choose', 'cargo' ),
+                'whole'         => __( 'Whole site', 'cargo' ),
+                'chooseFolder'  => __( 'Choose folder', 'cargo' ),
+                'useFolder'     => __( 'Use this folder', 'cargo' ),
+                'remove'        => __( 'Remove', 'cargo' ),
+                'role'          => __( 'Role', 'cargo' ),
                 'menu'          => [
-                    'open'      => __( 'Open', 'insightx-allhub' ),
-                    'openTab'   => __( 'Open in new tab', 'insightx-allhub' ),
-                    'download'  => __( 'Download', 'insightx-allhub' ),
-                    'preview'   => __( 'Preview', 'insightx-allhub' ),
-                    'upload'    => __( 'Upload files here', 'insightx-allhub' ),
-                    'mkdir'     => __( 'New folder', 'insightx-allhub' ),
-                    'mkfile'    => __( 'New file', 'insightx-allhub' ),
-                    'copy'      => __( 'Copy', 'insightx-allhub' ),
-                    'cut'       => __( 'Cut', 'insightx-allhub' ),
-                    'paste'     => __( 'Paste', 'insightx-allhub' ),
-                    'duplicate' => __( 'Duplicate', 'insightx-allhub' ),
-                    'delete'    => __( 'Delete', 'insightx-allhub' ),
-                    'empty'     => __( 'Empty the folder', 'insightx-allhub' ),
-                    'rename'    => __( 'Rename', 'insightx-allhub' ),
-                    'all'       => __( 'Select all', 'insightx-allhub' ),
-                    'invert'    => __( 'Invert selection', 'insightx-allhub' ),
-                    'info'      => __( 'Get info', 'insightx-allhub' ),
-                    'compress'  => __( 'Shrink PDF', 'insightx-allhub' ),
+                    'open'      => __( 'Open', 'cargo' ),
+                    'openTab'   => __( 'Open in new tab', 'cargo' ),
+                    'download'  => __( 'Download', 'cargo' ),
+                    'preview'   => __( 'Preview', 'cargo' ),
+                    'upload'    => __( 'Upload files here', 'cargo' ),
+                    'mkdir'     => __( 'New folder', 'cargo' ),
+                    'mkfile'    => __( 'New file', 'cargo' ),
+                    'copy'      => __( 'Copy', 'cargo' ),
+                    'cut'       => __( 'Cut', 'cargo' ),
+                    'paste'     => __( 'Paste', 'cargo' ),
+                    'duplicate' => __( 'Duplicate', 'cargo' ),
+                    'delete'    => __( 'Delete', 'cargo' ),
+                    'empty'     => __( 'Empty the folder', 'cargo' ),
+                    'rename'    => __( 'Rename', 'cargo' ),
+                    'all'       => __( 'Select all', 'cargo' ),
+                    'invert'    => __( 'Invert selection', 'cargo' ),
+                    'info'      => __( 'Get info', 'cargo' ),
+                    'compress'  => __( 'Shrink PDF', 'cargo' ),
                 ],
                 /* translators: %s: folder name. */
-                'emptyAsk'      => __( 'Delete everything inside "%s"? The folder itself is kept. This cannot be undone.', 'insightx-allhub' ),
-                'emptied'       => __( 'Folder emptied', 'insightx-allhub' ),
-                'copied'        => __( 'Copied', 'insightx-allhub' ),
-                'duplicated'    => __( 'Duplicated', 'insightx-allhub' ),
+                'emptyAsk'      => __( 'Delete everything inside "%s"? The folder itself is kept. This cannot be undone.', 'cargo' ),
+                'emptied'       => __( 'Folder emptied', 'cargo' ),
+                'copied'        => __( 'Copied', 'cargo' ),
+                'duplicated'    => __( 'Duplicated', 'cargo' ),
                 /* translators: %d: number of items. */
-                'clipCopy'      => __( '%d item(s) copied, paste them in another folder', 'insightx-allhub' ),
+                'clipCopy'      => __( '%d item(s) copied, paste them in another folder', 'cargo' ),
                 /* translators: %d: number of items. */
-                'clipCut'       => __( '%d item(s) cut, paste them in another folder', 'insightx-allhub' ),
-                'compressing'   => __( 'Shrinking…', 'insightx-allhub' ),
+                'clipCut'       => __( '%d item(s) cut, paste them in another folder', 'cargo' ),
+                'compressing'   => __( 'Shrinking…', 'cargo' ),
                 'busy'          => [
-                    'delete'    => __( 'Deleting', 'insightx-allhub' ),
-                    'empty'     => __( 'Emptying', 'insightx-allhub' ),
-                    'move'      => __( 'Moving', 'insightx-allhub' ),
-                    'copy'      => __( 'Copying', 'insightx-allhub' ),
-                    'duplicate' => __( 'Duplicating', 'insightx-allhub' ),
-                    'rename'    => __( 'Renaming', 'insightx-allhub' ),
+                    'delete'    => __( 'Deleting', 'cargo' ),
+                    'empty'     => __( 'Emptying', 'cargo' ),
+                    'move'      => __( 'Moving', 'cargo' ),
+                    'copy'      => __( 'Copying', 'cargo' ),
+                    'duplicate' => __( 'Duplicating', 'cargo' ),
+                    'rename'    => __( 'Renaming', 'cargo' ),
                 ],
                 /* translators: 1: size before, 2: size after. */
-                'shrunk'        => __( 'Shrunk from %1$s to %2$s', 'insightx-allhub' ),
-                'notShrunk'     => __( 'Already small — left as it is', 'insightx-allhub' ),
-                'bucketUpdated' => __( 'bucket copy replaced', 'insightx-allhub' ),
-                'noPreview'     => __( 'This file type cannot be previewed. Download it instead.', 'insightx-allhub' ),
-                'close'         => __( 'Close', 'insightx-allhub' ),
-                'infoPath'      => __( 'Path', 'insightx-allhub' ),
-                'infoUrl'       => __( 'Bucket URL', 'insightx-allhub' ),
-                'infoSiteUrl'   => __( 'Server URL', 'insightx-allhub' ),
-                'infoBucket'    => __( 'On the bucket', 'insightx-allhub' ),
-                'yes'           => __( 'Yes', 'insightx-allhub' ),
-                'checkBucket'   => __( 'Check on the bucket', 'insightx-allhub' ),
-                'checking'      => __( 'Checking…', 'insightx-allhub' ),
+                'shrunk'        => __( 'Shrunk from %1$s to %2$s', 'cargo' ),
+                'notShrunk'     => __( 'Already small — left as it is', 'cargo' ),
+                'bucketUpdated' => __( 'bucket copy replaced', 'cargo' ),
+                'noPreview'     => __( 'This file type cannot be previewed. Download it instead.', 'cargo' ),
+                'close'         => __( 'Close', 'cargo' ),
+                'infoPath'      => __( 'Path', 'cargo' ),
+                'infoUrl'       => __( 'Bucket URL', 'cargo' ),
+                'infoSiteUrl'   => __( 'Server URL', 'cargo' ),
+                'infoBucket'    => __( 'On the bucket', 'cargo' ),
+                'yes'           => __( 'Yes', 'cargo' ),
+                'checkBucket'   => __( 'Check on the bucket', 'cargo' ),
+                'checking'      => __( 'Checking…', 'cargo' ),
                 /* translators: 1: destination, 2: file size. */
-                'foundOn'       => __( 'On %1$s · %2$s', 'insightx-allhub' ),
+                'foundOn'       => __( 'On %1$s · %2$s', 'cargo' ),
                 /* translators: %s: destination. */
-                'notFoundOn'    => __( 'Not found on %s', 'insightx-allhub' ),
-                'openOnBucket'  => __( 'Open the bucket copy', 'insightx-allhub' ),
-                'healed'        => __( 'recorded as uploaded', 'insightx-allhub' ),
-                'no'            => __( 'No', 'insightx-allhub' ),
-                'folder'        => __( 'Folder', 'insightx-allhub' ),
+                'notFoundOn'    => __( 'Not found on %s', 'cargo' ),
+                'openOnBucket'  => __( 'Open the bucket copy', 'cargo' ),
+                'healed'        => __( 'recorded as uploaded', 'cargo' ),
+                'no'            => __( 'No', 'cargo' ),
+                'folder'        => __( 'Folder', 'cargo' ),
                 'actions'       => [
-                    'view'     => __( 'View', 'insightx-allhub' ),
-                    'upload'   => __( 'Upload', 'insightx-allhub' ),
-                    'mkdir'    => __( 'New folder', 'insightx-allhub' ),
-                    'rename'   => __( 'Rename', 'insightx-allhub' ),
-                    'move'     => __( 'Move', 'insightx-allhub' ),
-                    'download' => __( 'Download', 'insightx-allhub' ),
-                    'delete'   => __( 'Delete', 'insightx-allhub' ),
+                    'view'     => __( 'View', 'cargo' ),
+                    'upload'   => __( 'Upload', 'cargo' ),
+                    'mkdir'    => __( 'New folder', 'cargo' ),
+                    'rename'   => __( 'Rename', 'cargo' ),
+                    'move'     => __( 'Move', 'cargo' ),
+                    'download' => __( 'Download', 'cargo' ),
+                    'delete'   => __( 'Delete', 'cargo' ),
                 ],
             ],
         ] );
@@ -208,12 +208,12 @@ class ISXM_File_Manager_Admin {
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
                         </div>
                         <div>
-                            <h1><?php esc_html_e( 'File Manager', 'insightx-allhub' ); ?></h1>
-                            <p class="isxs-tagline"><?php esc_html_e( 'Files on this server. Files added outside the Media Library go to the bucket at once while Offload Media is on.', 'insightx-allhub' ); ?>
+                            <h1><?php esc_html_e( 'File Manager', 'cargo' ); ?></h1>
+                            <p class="isxs-tagline"><?php esc_html_e( 'Files on this server. Files added outside the Media Library go to the bucket at once while Offload Media is on.', 'cargo' ); ?>
                                 <span class="isxs-fm-dest"><?php
                                     /* translators: %s: destination, e.g. "Cloudflare R2 · bucket shop". */
-                                    printf( esc_html__( 'Destination: %s', 'insightx-allhub' ), '<strong>' . esc_html( ISXM_Tools::destination_label() ) . '</strong>' );
-                                    if ( ! ISXM_Settings::get( 'offload_enabled' ) ) echo ' · ' . esc_html__( 'Offload Media is off', 'insightx-allhub' );
+                                    printf( esc_html__( 'Destination: %s', 'cargo' ), '<strong>' . esc_html( ISXM_Tools::destination_label() ) . '</strong>' );
+                                    if ( ! ISXM_Settings::get( 'offload_enabled' ) ) echo ' · ' . esc_html__( 'Offload Media is off', 'cargo' );
                                 ?></span></p>
                         </div>
                     </div>
@@ -222,31 +222,31 @@ class ISXM_File_Manager_Admin {
 
             <?php if ( $admin ) : ?>
             <nav class="isxs-fm-tabs" role="tablist">
-                <button type="button" role="tab" class="is-active" aria-selected="true" data-tab="files"><?php esc_html_e( 'Files', 'insightx-allhub' ); ?></button>
-                <button type="button" role="tab" aria-selected="false" data-tab="access"><?php esc_html_e( 'Access', 'insightx-allhub' ); ?></button>
+                <button type="button" role="tab" class="is-active" aria-selected="true" data-tab="files"><?php esc_html_e( 'Files', 'cargo' ); ?></button>
+                <button type="button" role="tab" aria-selected="false" data-tab="access"><?php esc_html_e( 'Access', 'cargo' ); ?></button>
             </nav>
             <?php endif; ?>
 
             <div class="isxs-card isxs-fm-card" data-panel="files">
                 <div class="isxs-fm-toolbar">
-                    <nav class="isxs-fm-crumbs" id="isxs-fm-crumbs" aria-label="<?php esc_attr_e( 'Folder path', 'insightx-allhub' ); ?>"></nav>
+                    <nav class="isxs-fm-crumbs" id="isxs-fm-crumbs" aria-label="<?php esc_attr_e( 'Folder path', 'cargo' ); ?>"></nav>
                     <form class="isxs-fm-search" id="isxs-fm-search" role="search">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-                        <input type="search" id="isxs-fm-q" placeholder="<?php esc_attr_e( 'Search files in this folder', 'insightx-allhub' ); ?>" aria-label="<?php esc_attr_e( 'Search files', 'insightx-allhub' ); ?>">
+                        <input type="search" id="isxs-fm-q" placeholder="<?php esc_attr_e( 'Search files in this folder', 'cargo' ); ?>" aria-label="<?php esc_attr_e( 'Search files', 'cargo' ); ?>">
                     </form>
                     <div class="isxs-fm-actions">
                         <?php
                         /* translators: %s: maximum upload size, e.g. 64 MB. */
-                        $isxm_max = sprintf( __( 'Maximum upload size: %s per file', 'insightx-allhub' ), size_format( wp_max_upload_size() ) );
+                        $isxm_max = sprintf( __( 'Maximum upload size: %s per file', 'cargo' ), size_format( wp_max_upload_size() ) );
                         // op => [label, class, permission, icon path(s), title]
                         $isxm_tools = [
-                            'upload'   => [ __( 'Upload', 'insightx-allhub' ), 'is-primary', 'upload', '<path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>', $isxm_max ],
-                            'mkfile'   => [ __( 'New file', 'insightx-allhub' ), '', 'upload', '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 12v6M9 15h6"/>', '' ],
-                            'mkdir'    => [ __( 'New folder', 'insightx-allhub' ), '', 'mkdir', '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10v6M9 13h6"/>', '' ],
-                            'rename'   => [ __( 'Rename', 'insightx-allhub' ), 'is-sep', 'rename', '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>', '' ],
-                            'move'     => [ __( 'Move', 'insightx-allhub' ), '', 'move', '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>', '' ],
-                            'download' => [ __( 'Download', 'insightx-allhub' ), '', 'download', '<path d="M12 4v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/>', '' ],
-                            'delete'   => [ __( 'Delete', 'insightx-allhub' ), 'is-danger is-sep', 'delete', '<path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/>', '' ],
+                            'upload'   => [ __( 'Upload', 'cargo' ), 'is-primary', 'upload', '<path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>', $isxm_max ],
+                            'mkfile'   => [ __( 'New file', 'cargo' ), '', 'upload', '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 12v6M9 15h6"/>', '' ],
+                            'mkdir'    => [ __( 'New folder', 'cargo' ), '', 'mkdir', '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10v6M9 13h6"/>', '' ],
+                            'rename'   => [ __( 'Rename', 'cargo' ), 'is-sep', 'rename', '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>', '' ],
+                            'move'     => [ __( 'Move', 'cargo' ), '', 'move', '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>', '' ],
+                            'download' => [ __( 'Download', 'cargo' ), '', 'download', '<path d="M12 4v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/>', '' ],
+                            'delete'   => [ __( 'Delete', 'cargo' ), 'is-danger is-sep', 'delete', '<path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/>', '' ],
                         ];
                         foreach ( $isxm_tools as $isxm_op => $isxm_tool ) :
                             ?>
@@ -262,9 +262,9 @@ class ISXM_File_Manager_Admin {
                     <aside class="isxs-fm-tree" id="isxs-fm-tree"></aside>
                     <section class="isxs-fm-main" id="isxs-fm-main">
                         <p class="isxs-fm-note" id="isxs-fm-note" hidden></p>
-                        <p class="isxs-fm-results" id="isxs-fm-results" hidden><span></span> <button type="button" class="isxs-fm-results-clear"><?php esc_html_e( 'Clear', 'insightx-allhub' ); ?></button></p>
+                        <p class="isxs-fm-results" id="isxs-fm-results" hidden><span></span> <button type="button" class="isxs-fm-results-clear"><?php esc_html_e( 'Clear', 'cargo' ); ?></button></p>
                         <div class="isxs-fm-table-wrap"><table class="isxs-fm-table" id="isxs-fm-table"></table></div>
-                        <div class="isxs-fm-drop" id="isxs-fm-drop" hidden><?php esc_html_e( 'Drop files to upload here', 'insightx-allhub' ); ?></div>
+                        <div class="isxs-fm-drop" id="isxs-fm-drop" hidden><?php esc_html_e( 'Drop files to upload here', 'cargo' ); ?></div>
                     </section>
                 </div>
                 <ul class="isxs-fm-queue" id="isxs-fm-queue" hidden></ul>
@@ -276,13 +276,13 @@ class ISXM_File_Manager_Admin {
                 <div class="isxs-card-head">
                     <div class="isxs-card-head-title">
                         <div>
-                            <h2><?php esc_html_e( 'Who may use File Manager', 'insightx-allhub' ); ?></h2>
-                            <p class="isxs-card-sub"><?php esc_html_e( 'Administrators can always do everything. Everyone else gets what their role allows.', 'insightx-allhub' ); ?></p>
+                            <h2><?php esc_html_e( 'Who may use File Manager', 'cargo' ); ?></h2>
+                            <p class="isxs-card-sub"><?php esc_html_e( 'Administrators can always do everything. Everyone else gets what their role allows.', 'cargo' ); ?></p>
                         </div>
                     </div>
                 </div>
                 <div class="isxs-card-body">
-                    <h3 class="isxs-fm-access-title"><?php esc_html_e( 'By role', 'insightx-allhub' ); ?></h3>
+                    <h3 class="isxs-fm-access-title"><?php esc_html_e( 'By role', 'cargo' ); ?></h3>
                     <div class="isxs-fm-table-wrap"><table class="isxs-fm-access" id="isxs-fm-access-roles"></table></div>
                 </div>
             </div>
@@ -318,7 +318,7 @@ class ISXM_File_Manager_Admin {
         $allowed = in_array( $op, [ 'save_access', 'compress' ], true )
             ? ISXM_File_Manager_Access::is_full_admin()
             : isset( self::OP_ACTION[ $op ] ) && ISXM_File_Manager_Access::can( self::OP_ACTION[ $op ] );
-        if ( ! $allowed ) wp_send_json_error( [ 'code' => 'isxfm_denied', 'message' => __( 'You do not have permission to do this.', 'insightx-allhub' ) ], 403 );
+        if ( ! $allowed ) wp_send_json_error( [ 'code' => 'isxfm_denied', 'message' => __( 'You do not have permission to do this.', 'cargo' ) ], 403 );
         $fs   = $this->fs();
         $path = isset( $_POST['path'] ) ? (string) wp_unslash( $_POST['path'] ) : '';
         $name = isset( $_POST['name'] ) ? (string) wp_unslash( $_POST['name'] ) : '';
@@ -350,7 +350,7 @@ class ISXM_File_Manager_Admin {
                 // Only files this user can see may be looked up on the bucket.
                 $file   = $fs->resolve( $path );
                 if ( ! is_wp_error( $file ) && $fs->readable( $file ) !== true ) $file = $fs->readable( $file );
-                $result = is_wp_error( $file ) ? $file : ( is_file( $file ) ? ISXM_Tools::server_file_status( $fs->normalize( $path ), true ) : new WP_Error( 'isxfm_not_file', __( 'File not found.', 'insightx-allhub' ) ) );
+                $result = is_wp_error( $file ) ? $file : ( is_file( $file ) ? ISXM_Tools::server_file_status( $fs->normalize( $path ), true ) : new WP_Error( 'isxfm_not_file', __( 'File not found.', 'cargo' ) ) );
                 break;
             case 'compress':
                 // Heavy (Ghostscript), so administrators only — see the guard above.
@@ -361,7 +361,7 @@ class ISXM_File_Manager_Admin {
                 if ( is_wp_error( $ok ) ) { $result = $ok; break; }
                 $result = ( is_file( $file ) && strtolower( substr( $file, -4 ) ) === '.pdf' )
                     ? ISXM_Tools::compress_pdf_file( $fs->normalize( $path ) )
-                    : new WP_Error( 'isxfm_not_pdf', __( 'Not a PDF file.', 'insightx-allhub' ) );
+                    : new WP_Error( 'isxfm_not_pdf', __( 'Not a PDF file.', 'cargo' ) );
                 break;
             case 'mkfile':
                 $result = $fs->make_file( $path, $name );
@@ -372,8 +372,8 @@ class ISXM_File_Manager_Admin {
                     $too_big = is_array( $file ) && in_array( (int) $file['error'], [ UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE ], true );
                     $result  = new WP_Error( 'isxfm_upload', $too_big
                         /* translators: %s: maximum upload size, e.g. 64 MB. */
-                        ? sprintf( __( 'Larger than the server allows (%s)', 'insightx-allhub' ), size_format( wp_max_upload_size() ) )
-                        : __( 'The upload did not reach the server.', 'insightx-allhub' ) );
+                        ? sprintf( __( 'Larger than the server allows (%s)', 'cargo' ), size_format( wp_max_upload_size() ) )
+                        : __( 'The upload did not reach the server.', 'cargo' ) );
                     break;
                 }
                 $result = $fs->upload( $path, (string) $file['name'], (string) $file['tmp_name'], ! empty( $_POST['replace'] ) );
@@ -449,10 +449,10 @@ class ISXM_File_Manager_Admin {
 
     public function download() {
         check_admin_referer( self::NONCE );
-        if ( ! ISXM_File_Manager_Access::can( 'download' ) ) wp_die( esc_html__( 'You do not have permission to do this.', 'insightx-allhub' ), 403 );
+        if ( ! ISXM_File_Manager_Access::can( 'download' ) ) wp_die( esc_html__( 'You do not have permission to do this.', 'cargo' ), 403 );
         $fs   = $this->fs();
         $file = $fs->resolve( isset( $_GET['path'] ) ? (string) wp_unslash( $_GET['path'] ) : '' );
-        if ( is_wp_error( $file ) || ! is_file( $file ) || $fs->readable( $file ) !== true ) wp_die( esc_html__( 'File not found.', 'insightx-allhub' ), 404 );
+        if ( is_wp_error( $file ) || ! is_file( $file ) || $fs->readable( $file ) !== true ) wp_die( esc_html__( 'File not found.', 'cargo' ), 404 );
         $name   = basename( $file );
         $ext    = strtolower( pathinfo( $name, PATHINFO_EXTENSION ) );
         $inline = ! empty( $_GET['inline'] ) && isset( self::INLINE_TYPES[ $ext ] );

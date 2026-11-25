@@ -425,19 +425,19 @@ class ISXM_Client {
         $written        = @filesize( $temp );
         if ( $written === false ) {
             self::discard( $temp );
-            return new WP_Error( 'isxs_write_failed', sprintf( __( 'Could not write file %s', 'insightx-allhub' ), wp_basename( $destination ) ) );
+            return new WP_Error( 'isxs_write_failed', sprintf( __( 'Could not write file %s', 'cargo' ), wp_basename( $destination ) ) );
         }
         if ( $content_length !== '' && (int) $content_length !== (int) $written ) {
             self::discard( $temp );
             return new WP_Error(
                 'isxs_truncated_download',
-                sprintf( __( 'Download of %s is incomplete (got %d of %d bytes — the connection may have dropped mid-download)', 'insightx-allhub' ), $key, (int) $written, (int) $content_length )
+                sprintf( __( 'Download of %s is incomplete (got %d of %d bytes — the connection may have dropped mid-download)', 'cargo' ), $key, (int) $written, (int) $content_length )
             );
         }
 
         if ( ! @rename( $temp, $destination ) ) {
             self::discard( $temp );
-            return new WP_Error( 'isxs_write_failed', sprintf( __( 'Could not write file %s', 'insightx-allhub' ), wp_basename( $destination ) ) );
+            return new WP_Error( 'isxs_write_failed', sprintf( __( 'Could not write file %s', 'cargo' ), wp_basename( $destination ) ) );
         }
 
         return true;
@@ -483,7 +483,7 @@ class ISXM_Client {
      */
     public function test_connection() {
         if ( $this->bucket === '' || $this->access_key === '' || $this->secret_key === '' ) {
-            return new WP_Error( 'isxs_not_configured', __( 'Not fully configured — Bucket, Access Key and Secret Key are required', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_not_configured', __( 'Not fully configured — Bucket, Access Key and Secret Key are required', 'cargo' ) );
         }
 
         $response = $this->request( 'HEAD', '' );
@@ -491,10 +491,10 @@ class ISXM_Client {
 
         $code = wp_remote_retrieve_response_code( $response );
         if ( $code === 200 ) return true;
-        if ( $code === 404 ) return new WP_Error( 'isxs_no_bucket', sprintf( __( 'Bucket "%s" not found on this endpoint (HTTP 404)', 'insightx-allhub' ), $this->bucket ) );
-        if ( $code === 403 ) return new WP_Error( 'isxs_forbidden', __( 'Invalid Access Key/Secret Key, or no permission to access the bucket (HTTP 403)', 'insightx-allhub' ) );
-        if ( $code === 301 ) return new WP_Error( 'isxs_wrong_region', __( 'Region does not match the bucket (HTTP 301) — check the Region value', 'insightx-allhub' ) );
-        return new WP_Error( 'isxs_http_' . $code, sprintf( __( 'Connection failed (HTTP %d)', 'insightx-allhub' ), $code ) );
+        if ( $code === 404 ) return new WP_Error( 'isxs_no_bucket', sprintf( __( 'Bucket "%s" not found on this endpoint (HTTP 404)', 'cargo' ), $this->bucket ) );
+        if ( $code === 403 ) return new WP_Error( 'isxs_forbidden', __( 'Invalid Access Key/Secret Key, or no permission to access the bucket (HTTP 403)', 'cargo' ) );
+        if ( $code === 301 ) return new WP_Error( 'isxs_wrong_region', __( 'Region does not match the bucket (HTTP 301) — check the Region value', 'cargo' ) );
+        return new WP_Error( 'isxs_http_' . $code, sprintf( __( 'Connection failed (HTTP %d)', 'cargo' ), $code ) );
     }
 
     /**
@@ -649,7 +649,7 @@ class ISXM_Client {
         if ( $token === '' ) {
             return new WP_Error(
                 'isxs_pagination_broken',
-                __( 'The bucket reported another page of files but sent no continuation token — stopping here so the listing is not mistaken for complete', 'insightx-allhub' )
+                __( 'The bucket reported another page of files but sent no continuation token — stopping here so the listing is not mistaken for complete', 'cargo' )
             );
         }
         return $token;
@@ -983,7 +983,7 @@ class ISXM_Client {
         $ch = self::curl_handle();
         if ( ! $ch ) {
             fclose( $handle );
-            return new WP_Error( 'isxs_curl_init_failed', __( 'Could not start the cURL connection', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_curl_init_failed', __( 'Could not start the cURL connection', 'cargo' ) );
         }
         $curl_options = [
             CURLOPT_URL            => $url,
@@ -1019,7 +1019,7 @@ class ISXM_Client {
         fclose( $handle );
 
         if ( $errno ) {
-            return new WP_Error( 'isxs_curl_' . $errno, sprintf( __( 'Upload failed (cURL %d): %s', 'insightx-allhub' ), $errno, $error ) );
+            return new WP_Error( 'isxs_curl_' . $errno, sprintf( __( 'Upload failed (cURL %d): %s', 'cargo' ), $errno, $error ) );
         }
 
         return [
@@ -1169,7 +1169,7 @@ class ISXM_Client {
             return new WP_Error(
                 'isxs_file_too_large',
                 sprintf(
-                    __( 'The file is larger than memory can hold (%s, memory_limit %s) and this server has no cURL for streaming uploads', 'insightx-allhub' ),
+                    __( 'The file is larger than memory can hold (%s, memory_limit %s) and this server has no cURL for streaming uploads', 'cargo' ),
                     size_format( $size ),
                     ini_get( 'memory_limit' )
                 )
@@ -1222,7 +1222,7 @@ class ISXM_Client {
     private static function malformed_response_error() {
         return new WP_Error(
             'isxs_malformed_response',
-            __( 'The response from the source bucket is not valid XML (the connection may have dropped while fetching)', 'insightx-allhub' )
+            __( 'The response from the source bucket is not valid XML (the connection may have dropped while fetching)', 'cargo' )
         );
     }
 }

@@ -211,12 +211,12 @@ class ISXM_Settings {
      */
     public static function type_folder_fields() {
         return [
-            'product_folder'   => [ 'label' => __( 'Products folder (images)', 'insightx-allhub' ),     'default' => 'products' ],
-            'download_folder'  => [ 'label' => __( 'Product downloads folder', 'insightx-allhub' ), 'default' => 'downloads' ],
-            'post_folder'      => [ 'label' => __( 'Posts folder', 'insightx-allhub' ),              'default' => 'posts' ],
-            'promotion_folder' => [ 'label' => __( 'Promotions folder', 'insightx-allhub' ),            'default' => 'promotions' ],
-            'category_folder'  => [ 'label' => __( 'Product categories folder', 'insightx-allhub' ),       'default' => 'categories' ],
-            'brand_folder'     => [ 'label' => __( 'Brands folder', 'insightx-allhub' ),              'default' => 'brands' ],
+            'product_folder'   => [ 'label' => __( 'Products folder (images)', 'cargo' ),     'default' => 'products' ],
+            'download_folder'  => [ 'label' => __( 'Product downloads folder', 'cargo' ), 'default' => 'downloads' ],
+            'post_folder'      => [ 'label' => __( 'Posts folder', 'cargo' ),              'default' => 'posts' ],
+            'promotion_folder' => [ 'label' => __( 'Promotions folder', 'cargo' ),            'default' => 'promotions' ],
+            'category_folder'  => [ 'label' => __( 'Product categories folder', 'cargo' ),       'default' => 'categories' ],
+            'brand_folder'     => [ 'label' => __( 'Brands folder', 'cargo' ),              'default' => 'brands' ],
         ];
     }
 

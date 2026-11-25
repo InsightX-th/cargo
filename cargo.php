@@ -1,19 +1,20 @@
 <?php
 /**
- * Plugin Name: InsightX AllHub
+ * Plugin Name: Cargo
  * Plugin URI:  https://insightx.in.th/
- * Version:     1.0.6
+ * Version:     1.1.0
  * Requires at least: 7.0
  * Requires PHP: 7.4
  * Author:      InsightX
  * Author URI:  https://www.insightx.in.th
- * Text Domain: insightx-allhub
+ * Text Domain: cargo
  * Domain Path: /languages
- * Description: Offload media and server folders to S3-compatible storage with CDN delivery and provider migration, plus File Manager, PDF compression, full-site backup and a user guide — by InsightX (formerly InsightX Offload)
+ * Description: Offload media and server folders to S3-compatible storage with CDN delivery and provider migration, plus File Manager, PDF compression, full-site backup and a user guide — by InsightX (formerly InsightX AllHub)
  * License:     GPLv3 or later
+ * Update URI:  https://github.com/InsightX-th/cargo
  *
  * Copyright (C) 2026 InsightX. Original work — not derived from any third-party plugin.
- * InsightX AllHub (formerly InsightX Offload) is a fork of InsightX Storage (same DB identifiers: options,
+ * Cargo (formerly InsightX AllHub / InsightX Offload) is a fork of InsightX Storage (same DB identifiers: options,
  * postmeta, ledger table, cron hooks, AJAX actions), so it can be swapped in
  * for the original plugin without re-offloading anything. Deactivate the
  * original before activating this one — running both would double-hook the
@@ -27,27 +28,33 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /*
- * Renamed from InsightX Offload (folder insightx-offload). Both carry the same
- * ISXM_* classes, so the two must never load together. "insightx-allhub"
- * sorts first and loads first: while the old plugin is still active (or has
- * already loaded, as on the request that activates this one) stand aside,
- * and on activation deactivate the old plugin — the next request runs
- * AllHub on the same data.
+ * Renamed InsightX Offload (folder insightx-offload) → InsightX AllHub
+ * (insightx-allhub) → Cargo (cargo). All three carry the same ISXM_* classes,
+ * so they must never load together. While an old copy is still active (or has
+ * already loaded, as on the request that activates this one) stand aside, and
+ * on activation deactivate the old copies — the next request runs Cargo on the
+ * same data.
  */
-if ( ! function_exists( 'isxm_old_offload_active' ) ) {
-    function isxm_old_offload_active() {
-        $old = 'insightx-offload/insightx-offload.php';
-        if ( in_array( $old, (array) get_option( 'active_plugins', [] ), true ) ) return true;
-        return is_multisite() && isset( ( (array) get_site_option( 'active_sitewide_plugins', [] ) )[ $old ] );
+if ( ! function_exists( 'isxm_old_plugins_active' ) ) {
+    function isxm_old_plugins() {
+        return [ 'insightx-offload/insightx-offload.php', 'insightx-allhub/insightx-allhub.php' ];
+    }
+    function isxm_old_plugins_active() {
+        $active   = (array) get_option( 'active_plugins', [] );
+        $sitewide = is_multisite() ? (array) get_site_option( 'active_sitewide_plugins', [] ) : [];
+        foreach ( isxm_old_plugins() as $old ) {
+            if ( in_array( $old, $active, true ) || isset( $sitewide[ $old ] ) ) return true;
+        }
+        return false;
     }
 }
-if ( defined( 'ISXM_PLUGIN_DIR' ) || isxm_old_offload_active() ) {
+if ( defined( 'ISXM_PLUGIN_DIR' ) || isxm_old_plugins_active() ) {
     register_activation_hook( __FILE__, function ( $network_wide ) {
-        deactivate_plugins( 'insightx-offload/insightx-offload.php', true, $network_wide );
+        deactivate_plugins( isxm_old_plugins(), true, $network_wide );
     } );
     $isxm_notice = function () {
-        echo '<div class="notice notice-warning"><p><strong>InsightX AllHub:</strong> '
-            . esc_html__( 'InsightX Offload is now InsightX AllHub. Deactivate and delete InsightX Offload — AllHub starts on the next page load with all your settings, offloaded files and backups.', 'insightx-allhub' )
+        echo '<div class="notice notice-warning"><p><strong>Cargo:</strong> '
+            . esc_html__( 'InsightX AllHub (formerly InsightX Offload) is now Cargo. Deactivate and delete the old plugin — Cargo starts on the next page load with all your settings, offloaded files and backups.', 'cargo' )
             . '</p></div>';
     };
     add_action( 'admin_notices', $isxm_notice );
@@ -57,7 +64,7 @@ if ( defined( 'ISXM_PLUGIN_DIR' ) || isxm_old_offload_active() ) {
 
 define( 'ISXM_PLUGIN_DIR', trailingslashit( plugin_dir_path( __FILE__ ) ) );
 define( 'ISXM_PLUGIN_URL', trailingslashit( plugin_dir_url( __FILE__ ) ) );
-define( 'ISXM_PLUGIN_VERSION', '1.0.6' );
+define( 'ISXM_PLUGIN_VERSION', '1.1.0' );
 
 /*
  * GitHub update checker.
@@ -74,9 +81,9 @@ define( 'ISXM_PLUGIN_VERSION', '1.0.6' );
 require_once ISXM_PLUGIN_DIR . 'libs/plugin-update-checker/plugin-update-checker.php';
 
 $isxm_update_checker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-    'https://github.com/InsightX-th/insightx-allhub',
+    'https://github.com/InsightX-th/cargo',
     __FILE__,
-    'insightx-allhub'
+    'cargo'
 );
 $isxm_update_checker->getVcsApi()->enableReleaseAssets();
 
@@ -84,7 +91,7 @@ $isxm_update_checker->getVcsApi()->enableReleaseAssets();
 // plugin — load the bundled languages/*.mo ourselves. English is the source
 // language; any locale without a .mo falls back to it.
 add_action( 'init', function () {
-    load_plugin_textdomain( 'insightx-allhub', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+    load_plugin_textdomain( 'cargo', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 } );
 
 $isxm_files_to_load = [
@@ -132,7 +139,7 @@ if ( require ISXM_PLUGIN_DIR . 'modules/backup/load.php' ) {
 }
 
 /**
- * Custom error logger for InsightX AllHub (forked from InsightX Storage's
+ * Custom error logger for Cargo (forked from InsightX Storage's
  * logger — same option sink `isxs_log`, so historical entries carry over).
  *
  * Two sinks: WP_DEBUG's error_log (dev) and a persistent option-based log
@@ -147,9 +154,9 @@ if ( ! function_exists( 'isxm_log_error' ) ) {
     function isxm_log_error( $message ) {
         if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
             if ( is_array( $message ) || is_object( $message ) ) {
-                error_log( '[InsightX AllHub Debug] ' . print_r( $message, true ) );
+                error_log( '[Cargo Debug] ' . print_r( $message, true ) );
             } else {
-                error_log( '[InsightX AllHub Debug] ' . $message );
+                error_log( '[Cargo Debug] ' . $message );
             }
         }
 
@@ -196,9 +203,9 @@ add_action( 'plugins_loaded', function () {
     // deactivate instead.
     if ( defined( 'ISXS_PLUGIN_VERSION' ) || class_exists( 'ISXS_Offload' ) || class_exists( 'ISXS_Tools' ) ) {
         add_action( 'admin_notices', function () {
-            echo '<div class="notice notice-error"><p><strong>InsightX AllHub:</strong> '
+            echo '<div class="notice notice-error"><p><strong>Cargo:</strong> '
                 . wp_kses(
-                    __( 'InsightX Storage is still active — both plugins share the same data (options / postmeta / ledger table) and must never run together. Please <strong>deactivate InsightX Storage</strong> first, then re-activate InsightX AllHub. All existing data is picked up immediately, nothing needs to be offloaded again.', 'insightx-allhub' ),
+                    __( 'InsightX Storage is still active — both plugins share the same data (options / postmeta / ledger table) and must never run together. Please <strong>deactivate InsightX Storage</strong> first, then re-activate Cargo. All existing data is picked up immediately, nothing needs to be offloaded again.', 'cargo' ),
                     [ 'strong' => [] ]
                 )
                 . '</p></div>';

@@ -304,14 +304,14 @@ class ISXM_Offload {
         if ( self::is_protected_download( $attachment_id ) ) {
             // Not a failure — a deliberate skip, so no error record.
             self::clear_error( $attachment_id );
-            return new WP_Error( 'isxs_protected_download', __( 'Protected download (WooCommerce / Easy Digital Downloads) — kept on the server so it is never publicly readable in the bucket', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_protected_download', __( 'Protected download (WooCommerce / Easy Digital Downloads) — kept on the server so it is never publicly readable in the bucket', 'cargo' ) );
         }
 
         // An upload's own offload and a background run can reach the same
         // attachment at once; each would pick its own object version and the
         // first one's Remove Local could delete files the other still reads.
         if ( ! self::lock_attachment( $attachment_id ) ) {
-            return new WP_Error( 'isxs_busy', __( 'Another process is uploading this item right now — it will be picked up again later', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_busy', __( 'Another process is uploading this item right now — it will be picked up again later', 'cargo' ) );
         }
         try {
             $result = $this->run_offload( $attachment_id, $metadata, $defer_persist, $origin, $migration_paths, $stage_dir );
@@ -471,7 +471,7 @@ class ISXM_Offload {
      */
     private function run_offload( $attachment_id, $metadata, $defer_persist, $origin, array $migration_paths = [], $stage_dir = '' ) {
         if ( ! ISXM_Settings::is_configured() ) {
-            return new WP_Error( 'isxs_not_configured', __( 'Storage is not fully configured', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_not_configured', __( 'Storage is not fully configured', 'cargo' ) );
         }
 
         // Resolved against the CURRENT uploads dir, so an absolute path left
@@ -481,7 +481,7 @@ class ISXM_Offload {
         if ( $relative === null ) {
             // Not the same thing as a missing file: there is no usable path
             // to look for one at, and the fix is repairing the meta.
-            return new WP_Error( 'isxs_bad_meta', __( 'Attachment file data (_wp_attached_file) is corrupted — repair the meta before offloading', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_bad_meta', __( 'Attachment file data (_wp_attached_file) is corrupted — repair the meta before offloading', 'cargo' ) );
         }
 
         $file = self::local_path( $attachment_id );
@@ -500,10 +500,10 @@ class ISXM_Offload {
             if ( self::get_record( $attachment_id ) !== null ) {
                 return new WP_Error(
                     'isxs_local_removed',
-                    __( 'The file was deleted from the server (it is still in the original bucket) — run "Download files back from the bucket" first, then offload again', 'insightx-allhub' )
+                    __( 'The file was deleted from the server (it is still in the original bucket) — run "Download files back from the bucket" first, then offload again', 'cargo' )
                 );
             }
-            return new WP_Error( 'isxs_missing_local', __( 'Original file not found on the server', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_missing_local', __( 'Original file not found on the server', 'cargo' ) );
         }
 
         if ( $metadata === null ) {
@@ -587,7 +587,7 @@ class ISXM_Offload {
             if ( ! file_exists( $path ) ) {
                 if ( in_array( $filename, $prior, true ) ) { $uploaded[] = $filename; continue; }
                 if ( $filename === $primary ) {
-                    return new WP_Error( 'isxs_missing_local', __( 'Original file not found on the server', 'insightx-allhub' ) );
+                    return new WP_Error( 'isxs_missing_local', __( 'Original file not found on the server', 'cargo' ) );
                 }
                 $missing[] = $filename;
                 continue;
@@ -598,7 +598,7 @@ class ISXM_Offload {
             $result = $parallel[ $filename ] ?? $client->put_object( $base_key . $filename, $path, $mime, ! empty( $settings['send_public_acl'] ) );
             if ( is_wp_error( $result ) ) {
                 if ( $filename === $primary ) {
-                    return new WP_Error( 'isxs_upload_failed', sprintf( __( 'Upload of %s failed: %s', 'insightx-allhub' ), $filename, $result->get_error_message() ) );
+                    return new WP_Error( 'isxs_upload_failed', sprintf( __( 'Upload of %s failed: %s', 'cargo' ), $filename, $result->get_error_message() ) );
                 }
                 isxm_log_error( sprintf( 'Offload #%d: size %s failed — %s', $attachment_id, $filename, $result->get_error_message() ) );
                 $missing[] = $filename;
@@ -608,7 +608,7 @@ class ISXM_Offload {
         }
 
         if ( empty( $uploaded ) ) {
-            return new WP_Error( 'isxs_nothing_uploaded', __( 'No files to upload', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_nothing_uploaded', __( 'No files to upload', 'cargo' ) );
         }
 
         $uploaded = array_values( array_unique( array_merge( $uploaded, $prior ) ) );
@@ -634,7 +634,7 @@ class ISXM_Offload {
         // Nothing local may be deleted, and no URL rewritten, for an upload
         // the database does not remember.
         if ( ! self::set_record( $attachment_id, $record ) ) {
-            return new WP_Error( 'isxs_record_write', __( 'Could not save the upload record to the database; local files were kept', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_record_write', __( 'Could not save the upload record to the database; local files were kept', 'cargo' ) );
         }
         // A real upload succeeded — whatever "file missing both places"
         // flag the Sync tool may have left is now wrong.
@@ -704,7 +704,7 @@ class ISXM_Offload {
         $state  = self::status_for( $attachment_id );
         $record = $state['info'];
         if ( $state['status'] !== 'partial' ) {
-            return new WP_Error( 'isxs_not_partial', __( 'This item has no missing sizes on the current bucket', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_not_partial', __( 'This item has no missing sizes on the current bucket', 'cargo' ) );
         }
 
         $settings  = ISXM_Settings::all();
@@ -736,11 +736,11 @@ class ISXM_Offload {
             // why the sizes could not be rebuilt either.
             $parts = [];
             if ( $absent ) {
-                $parts[] = sprintf( __( 'Not found in %1$s: %2$s', 'insightx-allhub' ), self::display_dir( $local_dir ), implode( ', ', $absent ) )
+                $parts[] = sprintf( __( 'Not found in %1$s: %2$s', 'cargo' ), self::display_dir( $local_dir ), implode( ', ', $absent ) )
                     . ( $built['failed'] ? ' — ' . implode( '; ', array_unique( $built['failed'] ) ) : '' );
             }
             if ( $failed ) {
-                $parts[] = sprintf( __( 'Could not upload the missing sizes: %s', 'insightx-allhub' ), implode( ', ', $failed ) );
+                $parts[] = sprintf( __( 'Could not upload the missing sizes: %s', 'cargo' ), implode( ', ', $failed ) );
             }
             return new WP_Error( 'isxs_missing_sizes_unavailable', implode( ' ', $parts ) );
         }
@@ -749,7 +749,7 @@ class ISXM_Offload {
         $record['missing'] = array_values( array_diff( $record['missing'], $uploaded ) );
         if ( ! $record['missing'] ) unset( $record['missing'] );
         if ( ! self::set_record( $attachment_id, $record ) ) {
-            return new WP_Error( 'isxs_record_write', __( 'Could not save the upload record to the database; local files were kept', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_record_write', __( 'Could not save the upload record to the database; local files were kept', 'cargo' ) );
         }
         delete_post_meta( $attachment_id, self::ERROR_META_KEY );
 
@@ -778,11 +778,11 @@ class ISXM_Offload {
         $out  = [ 'uploaded' => [], 'failed' => [] ];
         // A reason shared by every size (no editor, no original) is said once.
         $fail = function ( $reason ) use ( &$out ) {
-            $out['failed'][] = sprintf( __( 'could not be created: %s', 'insightx-allhub' ), $reason );
+            $out['failed'][] = sprintf( __( 'could not be created: %s', 'cargo' ), $reason );
             return $out;
         };
         if ( ! function_exists( 'wp_get_image_editor' ) || ! wp_attachment_is_image( $attachment_id ) ) {
-            return $fail( __( 'not an image, or no image editor on this server', 'insightx-allhub' ) );
+            return $fail( __( 'not an image, or no image editor on this server', 'cargo' ) );
         }
 
         $meta    = wp_get_attachment_metadata( $attachment_id );
@@ -797,13 +797,13 @@ class ISXM_Offload {
             $primary = wp_basename( (string) get_post_meta( $attachment_id, '_wp_attached_file', true ) );
             $ext     = pathinfo( $primary, PATHINFO_EXTENSION );
             $base    = tempnam( get_temp_dir(), 'isxs-orig-' );
-            if ( $base === false ) return $fail( __( 'could not create a temporary file', 'insightx-allhub' ) );
+            if ( $base === false ) return $fail( __( 'could not create a temporary file', 'cargo' ) );
             @unlink( $base );
             $temp = $base . ( $ext !== '' ? '.' . $ext : '' ); // image editors read the type from the extension
             $got  = $client->get_object_to_file( $record['base_key'] . $primary, $temp );
             if ( is_wp_error( $got ) ) {
                 @unlink( $temp );
-                return $fail( sprintf( __( 'the original could not be downloaded from the bucket (%s)', 'insightx-allhub' ), $got->get_error_message() ) );
+                return $fail( sprintf( __( 'the original could not be downloaded from the bucket (%s)', 'cargo' ), $got->get_error_message() ) );
             }
             $original = $temp;
         }
@@ -813,7 +813,7 @@ class ISXM_Offload {
         $work_dir = trailingslashit( get_temp_dir() );
         foreach ( $names as $name ) {
             if ( ! isset( $by_file[ $name ] ) ) {
-                $out['failed'][] = sprintf( __( 'Could not create size %1$s: %2$s', 'insightx-allhub' ), $name, __( 'it is not in the image data', 'insightx-allhub' ) );
+                $out['failed'][] = sprintf( __( 'Could not create size %1$s: %2$s', 'cargo' ), $name, __( 'it is not in the image data', 'cargo' ) );
                 continue;
             }
             $size = $by_file[ $name ];
@@ -826,7 +826,7 @@ class ISXM_Offload {
             $saved  = is_wp_error( $editor ) ? $editor : $editor->resize( $w, $h, $crop );
             $saved  = is_wp_error( $saved ) ? $saved : $editor->save( $work_dir . $name );
             if ( is_wp_error( $saved ) ) {
-                $out['failed'][] = sprintf( __( 'Could not create size %1$s: %2$s', 'insightx-allhub' ), $name, $saved->get_error_message() );
+                $out['failed'][] = sprintf( __( 'Could not create size %1$s: %2$s', 'cargo' ), $name, $saved->get_error_message() );
                 continue;
             }
             $type = wp_check_filetype( $name );
@@ -1023,7 +1023,7 @@ class ISXM_Offload {
     public function download_attachment( $attachment_id ) {
         $info = self::get_record( $attachment_id );
         if ( ! is_array( $info ) || empty( $info['files'] ) ) {
-            return new WP_Error( 'isxs_not_offloaded', __( 'This item has not been offloaded', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_not_offloaded', __( 'This item has not been offloaded', 'cargo' ) );
         }
 
         // Same normalisation as run_offload(): downloading back to a stale
@@ -1031,7 +1031,7 @@ class ISXM_Offload {
         // (worse) recreate that directory tree under the web root.
         $file = self::local_path( $attachment_id );
         if ( $file === '' ) {
-            return new WP_Error( 'isxs_no_path', __( 'Unknown destination file location', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_no_path', __( 'Unknown destination file location', 'cargo' ) );
         }
         $local_dir = trailingslashit( dirname( $file ) );
         wp_mkdir_p( $local_dir );
@@ -1047,7 +1047,7 @@ class ISXM_Offload {
             // skipped file would later look "downloaded" to Remove).
             $filename = self::safe_filename( $filename );
             if ( $filename === '' ) {
-                return new WP_Error( 'isxs_unsafe_filename', __( 'Invalid file name in the attachment data — check the meta', 'insightx-allhub' ) );
+                return new WP_Error( 'isxs_unsafe_filename', __( 'Invalid file name in the attachment data — check the meta', 'cargo' ) );
             }
             if ( ! file_exists( $local_dir . $filename ) ) {
                 $wanted[ $filename ] = [ 'key' => $info['base_key'] . $filename, 'path' => $local_dir . $filename ];
@@ -1068,14 +1068,14 @@ class ISXM_Offload {
                 $missing[] = $filename;
                 continue;
             }
-            return new WP_Error( 'isxs_download_failed', sprintf( __( 'Download of %s failed: %s', 'insightx-allhub' ), $filename, $fetched->get_error_message() ) );
+            return new WP_Error( 'isxs_download_failed', sprintf( __( 'Download of %s failed: %s', 'cargo' ), $filename, $fetched->get_error_message() ) );
         }
 
         if ( $missing ) {
             // Real failures (auth/network) returned above; only objects that
             // no longer exist remain, which remove_remote_attachment() treats
             // as safe to proceed with instead of getting stuck on this item.
-            return new WP_Error( 'isxs_download_missing', sprintf( __( 'Download of %s failed: %s', 'insightx-allhub' ), implode( ', ', $missing ), 'HTTP 404' ) );
+            return new WP_Error( 'isxs_download_missing', sprintf( __( 'Download of %s failed: %s', 'cargo' ), implode( ', ', $missing ), 'HTTP 404' ) );
         }
 
         return true;
@@ -1102,7 +1102,7 @@ class ISXM_Offload {
     public function remove_remote_attachment( $attachment_id, $defer_persist = false ) {
         $info = self::get_record( $attachment_id );
         if ( ! is_array( $info ) || empty( $info['files'] ) ) {
-            return new WP_Error( 'isxs_not_offloaded', __( 'This item has not been offloaded', 'insightx-allhub' ) );
+            return new WP_Error( 'isxs_not_offloaded', __( 'This item has not been offloaded', 'cargo' ) );
         }
 
         $restored = $this->download_attachment( $attachment_id );
@@ -1118,7 +1118,7 @@ class ISXM_Offload {
         $keys   = self::unshared_keys( $attachment_id, $info );
         foreach ( $client->delete_objects( $keys ) as $key => $result ) {
             if ( is_wp_error( $result ) ) {
-                return new WP_Error( 'isxs_delete_failed', sprintf( __( 'Could not delete %s from the bucket: %s', 'insightx-allhub' ), wp_basename( $key ), $result->get_error_message() ) );
+                return new WP_Error( 'isxs_delete_failed', sprintf( __( 'Could not delete %s from the bucket: %s', 'cargo' ), wp_basename( $key ), $result->get_error_message() ) );
             }
         }
 

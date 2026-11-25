@@ -1,15 +1,15 @@
 <?php
 /**
- * InsightX AllHub (renamed from InsightX Offload): stands aside while the old
- * insightx-offload plugin is active or already loaded, and deactivates it on
- * activation. Each case runs in a fresh PHP process.
+ * Cargo (renamed from InsightX AllHub, before that InsightX Offload): stands
+ * aside while an old copy is active or already loaded, and deactivates the old
+ * copies on activation. Each case runs in a fresh PHP process.
  */
 $pass = 0; $fail = 0;
 function t( $label, $ok, $detail = '' ) {
 	global $pass, $fail;
 	if ( $ok ) { $pass++; echo "  PASS $label\n"; } else { $fail++; echo "  FAIL $label  -> $detail\n"; }
 }
-$main = dirname( __DIR__ ) . '/insightx-allhub.php';
+$main = dirname( __DIR__ ) . '/cargo.php';
 $stubs = '<?php
 define( "ABSPATH", "/tmp/" );
 $GLOBALS["t"] = [ "actions" => [], "activation" => null, "deactivated" => null ];
@@ -30,7 +30,7 @@ register_shutdown_function( function () {
 	if ( $t["activation"] ) ( $t["activation"] )( false );
 	ob_start(); if ( isset( $t["actions"]["admin_notices"] ) ) ( $t["actions"]["admin_notices"] )(); $notice = ob_get_clean();
 	echo "\n" . json_encode( [
-		"booted"      => defined( "ISXM_PLUGIN_DIR" ) && strpos( ISXM_PLUGIN_DIR, "insightx-allhub" ) !== false,
+		"booted"      => defined( "ISXM_PLUGIN_DIR" ) && strpos( ISXM_PLUGIN_DIR, "cargo" ) !== false,
 		"has_admin"   => class_exists( "ISXM_Admin", false ),
 		"activation"  => (bool) $t["activation"],
 		"deactivated" => $GLOBALS["t"]["deactivated"],
@@ -47,27 +47,34 @@ $run = function ( $pre ) use ( $stubs, $main ) {
 	$lines = explode( "\n", trim( (string) $out ) );
 	return [ json_decode( end( $lines ), true ), $out ];
 };
-$old = 'insightx-offload/insightx-offload.php';
+$olds = [ 'insightx-offload/insightx-offload.php', 'insightx-allhub/insightx-allhub.php' ];
+$deactivates_olds = function ( $r ) use ( $olds ) {
+	return is_array( $r['deactivated'] ) && $r['deactivated'][0] === $olds && $r['deactivated'][1] === true;
+};
 
-echo "=== Old InsightX Offload still active ===\n";
-[ $r, $out ] = $run( '$GLOBALS["active"] = [ "akismet/akismet.php", "' . $old . '" ];' );
-t( 'R1 AllHub does not boot (no ISXM_* code loaded, no fatal from duplicate classes)', is_array( $r ) && ! $r['booted'] && ! $r['has_admin'], $out );
-t( 'R2 activating AllHub deactivates insightx-offload', is_array( $r ) && $r['activation'] && $r['deactivated'][0] === $old && $r['deactivated'][1] === true, $out );
-t( 'R3 admins are told to deactivate and delete the old plugin', is_array( $r ) && strpos( $r['notice'], 'InsightX Offload is now InsightX AllHub' ) !== false && $r['net_notice'], $out );
+foreach ( $olds as $old ) {
+	$name = dirname( $old );
+	echo "=== Old $name still active ===\n";
+	[ $r, $out ] = $run( '$GLOBALS["active"] = [ "akismet/akismet.php", "' . $old . '" ];' );
+	t( "R1 [$name] Cargo does not boot (no ISXM_* code loaded, no fatal from duplicate classes)", is_array( $r ) && ! $r['booted'] && ! $r['has_admin'], $out );
+	t( "R2 [$name] activating Cargo deactivates the old plugins", is_array( $r ) && $r['activation'] && $deactivates_olds( $r ), $out );
+	t( "R3 [$name] admins are told to deactivate and delete the old plugin", is_array( $r ) && strpos( $r['notice'], 'is now Cargo' ) !== false && $r['net_notice'], $out );
 
-echo "\n=== Old plugin already loaded on this request (the activation request) ===\n";
-[ $r, $out ] = $run( 'define( "ISXM_PLUGIN_DIR", "/x/insightx-offload/" );' );
-t( 'R4 AllHub stands aside and still deactivates the old plugin on activation', is_array( $r ) && ! $r['has_admin'] && $r['deactivated'][0] === $old, $out );
+	echo "\n=== Old $name network-active (multisite) ===\n";
+	[ $r, $out ] = $run( '$GLOBALS["ms"] = true; $GLOBALS["sitewide"] = [ "' . $old . '" => time() ];' );
+	t( "R5 [$name] network-active old plugin is detected too", is_array( $r ) && ! $r['booted'] && $deactivates_olds( $r ), $out );
+	echo "\n";
+}
 
-echo "\n=== Old plugin network-active (multisite) ===\n";
-[ $r, $out ] = $run( '$GLOBALS["ms"] = true; $GLOBALS["sitewide"] = [ "' . $old . '" => time() ];' );
-t( 'R5 network-active old plugin is detected too', is_array( $r ) && ! $r['booted'] && $r['deactivated'][0] === $old, $out );
+echo "=== Old plugin already loaded on this request (the activation request) ===\n";
+[ $r, $out ] = $run( 'define( "ISXM_PLUGIN_DIR", "/x/insightx-allhub/" );' );
+t( 'R4 Cargo stands aside and still deactivates the old plugins on activation', is_array( $r ) && ! $r['has_admin'] && $deactivates_olds( $r ), $out );
 
-echo "\n=== Old plugin not active ===\n";
-[ $r, $out ] = $run( '$GLOBALS["active"] = [ "insightx-allhub/insightx-allhub.php" ];' );
-t( 'R6 AllHub boots normally and deactivates nothing', is_array( $r ) && $r['booted'] && $r['deactivated'] === null && $r['notice'] === '', $out );
-t( 'R7 a look-alike plugin (insightx-offload-pro) is not mistaken for the old one', ( function () use ( $run ) {
-	[ $r ] = $run( '$GLOBALS["active"] = [ "insightx-offload-pro/insightx-offload.php" ];' );
+echo "\n=== Old plugins not active ===\n";
+[ $r, $out ] = $run( '$GLOBALS["active"] = [ "cargo/cargo.php" ];' );
+t( 'R6 Cargo boots normally and deactivates nothing', is_array( $r ) && $r['booted'] && $r['deactivated'] === null && $r['notice'] === '', $out );
+t( 'R7 look-alike plugins (insightx-offload-pro, insightx-allhub-pro) are not mistaken for the old ones', ( function () use ( $run ) {
+	[ $r ] = $run( '$GLOBALS["active"] = [ "insightx-offload-pro/insightx-offload.php", "insightx-allhub-pro/insightx-allhub.php" ];' );
 	return is_array( $r ) && $r['booted'];
 } )(), '' );
 

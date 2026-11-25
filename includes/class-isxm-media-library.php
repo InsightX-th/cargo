@@ -47,7 +47,7 @@ class ISXM_Media_Library {
 
     public function add_column( $columns ) {
         $columns['isxs_storage'] = 'Storage';
-        $columns['isxs_bucket']  = __( 'Bucket', 'insightx-allhub' );
+        $columns['isxs_bucket']  = __( 'Bucket', 'cargo' );
         return $columns;
     }
 
@@ -107,11 +107,11 @@ class ISXM_Media_Library {
 
         $state  = ISXM_Offload::status_for( $post_id );
         $labels = [
-            'offloaded'    => [ '☁', __( 'In the cloud', 'insightx-allhub' ), 'isxs-ml-ok' ],
-            'partial'      => [ '◐', __( 'Not all sizes uploaded', 'insightx-allhub' ), 'isxs-ml-partial' ],
-            'failed'       => [ '⚠', __( 'Offload failed', 'insightx-allhub' ), 'isxs-ml-failed' ],
-            'other_bucket' => [ '↗', __( 'In another bucket', 'insightx-allhub' ), 'isxs-ml-other' ],
-            'pending'      => [ '○', __( 'Not in the cloud yet', 'insightx-allhub' ), 'isxs-ml-pending' ],
+            'offloaded'    => [ '☁', __( 'In the cloud', 'cargo' ), 'isxs-ml-ok' ],
+            'partial'      => [ '◐', __( 'Not all sizes uploaded', 'cargo' ), 'isxs-ml-partial' ],
+            'failed'       => [ '⚠', __( 'Offload failed', 'cargo' ), 'isxs-ml-failed' ],
+            'other_bucket' => [ '↗', __( 'In another bucket', 'cargo' ), 'isxs-ml-other' ],
+            'pending'      => [ '○', __( 'Not in the cloud yet', 'cargo' ), 'isxs-ml-pending' ],
         ];
         list( $icon, $label, $class ) = $labels[ $state['status'] ];
 
@@ -121,9 +121,9 @@ class ISXM_Media_Library {
         // pending that would only fail with "Original file not found".
         if ( get_post_meta( $post_id, ISXM_Offload::DATA_LOSS_META_KEY, true ) ) {
             $icon  = '✕';
-            $label = __( 'File missing everywhere', 'insightx-allhub' );
+            $label = __( 'File missing everywhere', 'cargo' );
             $class = 'isxs-ml-dataloss';
-            $detail = __( 'Neither the local file nor the bucket copy exists anymore — the original must be recovered first (Offload/Migrate cannot re-upload it)', 'insightx-allhub' );
+            $detail = __( 'Neither the local file nor the bucket copy exists anymore — the original must be recovered first (Offload/Migrate cannot re-upload it)', 'cargo' );
             printf(
                 '<span class="isxs-ml-status %s" title="%s"><span aria-hidden="true">%s</span> %s</span>',
                 esc_attr( $class ),
@@ -141,10 +141,10 @@ class ISXM_Media_Library {
         if ( $state['status'] === 'failed' && ! empty( $state['error']['message'] ) ) {
             $detail = $state['error']['message'];
             if ( ! empty( $state['error']['tries'] ) && $state['error']['tries'] > 1 ) {
-                $detail .= sprintf( __( ' (tried %d times)', 'insightx-allhub' ), (int) $state['error']['tries'] );
+                $detail .= sprintf( __( ' (tried %d times)', 'cargo' ), (int) $state['error']['tries'] );
             }
         } elseif ( $state['status'] === 'partial' ) {
-            $detail = __( 'Missing: ', 'insightx-allhub' ) . implode( ', ', array_slice( $state['info']['missing'], 0, 5 ) );
+            $detail = __( 'Missing: ', 'cargo' ) . implode( ', ', array_slice( $state['info']['missing'], 0, 5 ) );
         }
 
         printf(
@@ -171,11 +171,11 @@ class ISXM_Media_Library {
 
         $current = isset( $_GET[ self::FILTER_VAR ] ) ? sanitize_key( wp_unslash( $_GET[ self::FILTER_VAR ] ) ) : '';
         $options = [
-            ''          => __( 'All Storage statuses', 'insightx-allhub' ),
-            'offloaded' => __( 'In the cloud', 'insightx-allhub' ),
-            'partial'   => __( 'Not all sizes uploaded', 'insightx-allhub' ),
-            'pending'   => __( 'Not in the cloud yet', 'insightx-allhub' ),
-            'failed'    => __( 'Offload failed', 'insightx-allhub' ),
+            ''          => __( 'All Storage statuses', 'cargo' ),
+            'offloaded' => __( 'In the cloud', 'cargo' ),
+            'partial'   => __( 'Not all sizes uploaded', 'cargo' ),
+            'pending'   => __( 'Not in the cloud yet', 'cargo' ),
+            'failed'    => __( 'Offload failed', 'cargo' ),
         ];
 
         echo '<select name="' . esc_attr( self::FILTER_VAR ) . '">';
@@ -192,9 +192,9 @@ class ISXM_Media_Library {
         $avatar = isset( $_GET[ self::AVATAR_VAR ] ) ? sanitize_key( wp_unslash( $_GET[ self::AVATAR_VAR ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification -- read-only list filter
         echo '<select name="' . esc_attr( self::AVATAR_VAR ) . '">';
         foreach ( [
-            ''        => __( 'All image types', 'insightx-allhub' ),
-            'only'    => __( 'User profile pictures', 'insightx-allhub' ),
-            'exclude' => __( 'Without user profile pictures', 'insightx-allhub' ),
+            ''        => __( 'All image types', 'cargo' ),
+            'only'    => __( 'User profile pictures', 'cargo' ),
+            'exclude' => __( 'Without user profile pictures', 'cargo' ),
         ] as $value => $label ) {
             printf( '<option value="%s"%s>%s</option>', esc_attr( $value ), selected( $avatar, $value, false ), esc_html( $label ) );
         }
@@ -206,7 +206,7 @@ class ISXM_Media_Library {
         }
         $current = self::selected_bucket_value();
         echo '<select name="' . esc_attr( self::BUCKET_VAR ) . '">';
-        printf( '<option value="">%s</option>', esc_html__( 'All buckets', 'insightx-allhub' ) );
+        printf( '<option value="">%s</option>', esc_html__( 'All buckets', 'cargo' ) );
         foreach ( $buckets as $value => $row ) {
             printf(
                 '<option value="%s"%s>%s</option>',
@@ -439,7 +439,7 @@ class ISXM_Media_Library {
         $actions['isxs_offload'] = sprintf(
             '<a href="#" class="isxs-ml-offload" data-id="%d">%s</a>',
             (int) $post->ID,
-            $state['status'] === 'failed' ? __( 'Retry Offload', 'insightx-allhub' ) : __( 'Offload Now', 'insightx-allhub' )
+            $state['status'] === 'failed' ? __( 'Retry Offload', 'cargo' ) : __( 'Offload Now', 'cargo' )
         );
 
         return $actions;
@@ -447,7 +447,7 @@ class ISXM_Media_Library {
 
     public function add_bulk_action( $actions ) {
         if ( current_user_can( 'manage_options' ) && ISXM_Settings::is_configured() ) {
-            $actions[ self::BULK_ACTION ] = __( 'Offload to the cloud', 'insightx-allhub' );
+            $actions[ self::BULK_ACTION ] = __( 'Offload to the cloud', 'cargo' );
         }
         return $actions;
     }
@@ -502,10 +502,10 @@ class ISXM_Media_Library {
         $ok     = (int) $_GET[ self::RESULT_OK ];
         $failed = isset( $_GET[ self::RESULT_ERROR ] ) ? (int) $_GET[ self::RESULT_ERROR ] : 0;
 
-        $message = sprintf( __( 'Offloaded %d items', 'insightx-allhub' ), $ok );
+        $message = sprintf( __( 'Offloaded %d items', 'cargo' ), $ok );
         if ( $failed > 0 ) {
             $message .= sprintf(
-                __( ' — %d failed (<a href="%s">show only failures</a>)', 'insightx-allhub' ),
+                __( ' — %d failed (<a href="%s">show only failures</a>)', 'cargo' ),
                 $failed,
                 esc_url( admin_url( 'upload.php?mode=list&' . self::FILTER_VAR . '=failed' ) )
             );
@@ -545,8 +545,8 @@ class ISXM_Media_Library {
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce'   => wp_create_nonce( ISXM_Tools::NONCE_ACTION ),
             'i18n'    => [
-                'working' => __( 'Offloading…', 'insightx-allhub' ),
-                'error'   => __( 'An error occurred', 'insightx-allhub' ),
+                'working' => __( 'Offloading…', 'cargo' ),
+                'error'   => __( 'An error occurred', 'cargo' ),
             ],
         ] );
     }

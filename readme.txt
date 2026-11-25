@@ -1,10 +1,10 @@
-=== InsightX AllHub ===
+=== Cargo ===
 Contributors: insightx
 Tags: offload, s3, minio, cloudflare r2, digitalocean spaces, cdn, migrate, media, wp-cli
 Requires at least: 7.0
 Tested up to: 7.1.5
 Requires PHP: 7.4
-Stable tag: 1.0.6
+Stable tag: 1.1.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -12,7 +12,7 @@ Offload media and server folders to S3-compatible storage, with CDN delivery, mi
 
 == Description ==
 
-InsightX AllHub จัดเก็บสื่อ WordPress และไฟล์ในโฟลเดอร์บนเซิร์ฟเวอร์บน S3-compatible storage พร้อมเสิร์ฟผ่าน Storage/CDN ย้ายไฟล์ระหว่างผู้ให้บริการ จัดการไฟล์ ย่อ PDF และสำรอง/ย้ายเว็บทั้งเว็บ (รวม InsightX Backup ไว้ในตัวแล้ว) จากหลังบ้าน WordPress เดิมชื่อ InsightX Offload
+Cargo จัดเก็บสื่อ WordPress และไฟล์ในโฟลเดอร์บนเซิร์ฟเวอร์บน S3-compatible storage พร้อมเสิร์ฟผ่าน Storage/CDN ย้ายไฟล์ระหว่างผู้ให้บริการ จัดการไฟล์ ย่อ PDF และสำรอง/ย้ายเว็บทั้งเว็บ (รวม InsightX Backup ไว้ในตัวแล้ว) จากหลังบ้าน WordPress เดิมชื่อ InsightX AllHub และ InsightX Offload
 
 รองรับ Amazon S3, MinIO, Cloudflare R2, DigitalOcean Spaces, Garage, Google Cloud Storage ผ่าน S3-compatible API และ Custom S3 พร้อมภาษาไทยและอังกฤษ
 
@@ -58,9 +58,9 @@ Secret Key ใช้ AES-256-GCM เมื่อ OpenSSL รองรับ แ�
 
 = ติดตั้งครั้งแรก =
 
-1. ดาวน์โหลด release ZIP ของ InsightX AllHub จาก https://github.com/InsightX-th/insightx-allhub/releases หรือวางโฟลเดอร์ insightx-allhub ใน wp-content/plugins/
+1. ดาวน์โหลด release ZIP ของ Cargo จาก https://github.com/InsightX-th/cargo/releases หรือวางโฟลเดอร์ cargo ใน wp-content/plugins/
 2. ติดตั้งและเปิดใช้งานผ่านหน้า ปลั๊กอิน หากใช้ InsightX Storage อยู่ ให้ปิดตัวเดิมก่อน เพราะทั้งสองปลั๊กอินใช้ข้อมูลและ hooks ร่วมกัน
-3. ไปที่ InsightX AllHub → Connections เลือก provider แล้วกรอก Endpoint, Bucket, Region, Access Key และ Secret Key บันทึกเพื่อทดสอบการเชื่อมต่อ
+3. ไปที่ Cargo → Connections เลือก provider แล้วกรอก Endpoint, Bucket, Region, Access Key และ Secret Key บันทึกเพื่อทดสอบการเชื่อมต่อ
 4. ไปที่ Media เลือก provider ปลายทาง เปิด Offload Media และตั้ง Delivery/CDN ตามต้องการ
 5. ไปที่ Tools → Offload media เลือก Media Library หรือโฟลเดอร์บนเซิร์ฟเวอร์ แล้วเริ่มอัปโหลดไฟล์เดิม
 6. หากต้องการใช้ File Manager ให้เปิดเมนู จัดการไฟล์ และกำหนดสิทธิ์สำหรับผู้ใช้ที่ต้องการให้เข้าถึง
@@ -73,9 +73,9 @@ Secret Key ใช้ AES-256-GCM เมื่อ OpenSSL รองรับ แ�
 * Loopback/WP-Cron ที่ทำงานได้ หรือ external CLI runner สำหรับงานเบื้องหลัง
 * WP-CLI เฉพาะเมื่อต้องการสั่งงานผ่าน terminal
 
-= ย้ายมาจาก InsightX Offload (ชื่อเดิม) =
+= ย้ายมาจาก InsightX AllHub หรือ InsightX Offload (ชื่อเดิม) =
 
-ติดตั้ง zip ของ InsightX AllHub แล้วกดเปิด AllHub จะปิด InsightX Offload ให้เอง การตั้งค่า ไฟล์ที่ offload แล้ว ข้อมูลสำรอง และตารางเวลาเดิมใช้ต่อได้ทันที จากนั้นลบ InsightX Offload ได้เลย ระหว่างที่ตัวเดิมยังเปิดอยู่ AllHub จะไม่ทำงานและขึ้นข้อความเตือน ห้ามเปิดทั้งสองตัวพร้อมกัน
+ติดตั้ง zip ของ Cargo แล้วกดเปิด Cargo จะปิด InsightX AllHub หรือ InsightX Offload ตัวเดิมให้เอง การตั้งค่า ไฟล์ที่ offload แล้ว ข้อมูลสำรอง และตารางเวลาเดิมใช้ต่อได้ทันที จากนั้นลบตัวเดิมได้เลย ระหว่างที่ตัวเดิมยังเปิดอยู่ Cargo จะไม่ทำงานและขึ้นข้อความเตือน ห้ามเปิดพร้อมกัน ตัวเดิมอัปเดตข้ามมาเป็น Cargo เองไม่ได้ ต้องติดตั้ง zip ใหม่ครั้งเดียว
 
 = อัปเดตหรือย้ายมาจาก InsightX Storage =
 
@@ -85,7 +85,7 @@ Secret Key ใช้ AES-256-GCM เมื่อ OpenSSL รองรับ แ�
 
 = สำรองข้อมูลทั้งเว็บได้ไหม? =
 
-ได้ ตั้งแต่ 0.3.0 รวม InsightX Backup ไว้ในเมนู InsightX AllHub → สำรองข้อมูล ส่งออก/นำเข้าทั้งเว็บ (ฐานข้อมูล + wp-content) เป็นแพ็กเกจ .wpress ตั้งเวลาสำรองอัตโนมัติ และเก็บใน Storage ได้
+ได้ ตั้งแต่ 0.3.0 รวม InsightX Backup ไว้ในเมนู Cargo → สำรองข้อมูล ส่งออก/นำเข้าทั้งเว็บ (ฐานข้อมูล + wp-content) เป็นแพ็กเกจ .wpress ตั้งเวลาสำรองอัตโนมัติ และเก็บใน Storage ได้
 
 = ไฟล์สำรองเปิดจากเว็บได้ไหม? =
 
@@ -93,7 +93,7 @@ Secret Key ใช้ AES-256-GCM เมื่อ OpenSSL รองรับ แ�
 
 = ใช้ปลั๊กอิน InsightX Backup อยู่แล้ว ต้องทำอะไร? =
 
-ติดตั้ง InsightX AllHub แล้วปิดและลบ InsightX Backup ตัวเดิม ไฟล์สำรอง ตารางเวลา การเชื่อมต่อ และการตั้งค่าเดิมใช้ต่อได้ทันที ระหว่างที่ตัวเดิมยังเปิดอยู่ ส่วนสำรองข้อมูลของ InsightX AllHub จะยังไม่ทำงาน (กันการชนกัน) และมีข้อความเตือนให้ลบตัวเดิม
+ติดตั้ง Cargo แล้วปิดและลบ InsightX Backup ตัวเดิม ไฟล์สำรอง ตารางเวลา การเชื่อมต่อ และการตั้งค่าเดิมใช้ต่อได้ทันที ระหว่างที่ตัวเดิมยังเปิดอยู่ ส่วนสำรองข้อมูลของ Cargo จะยังไม่ทำงาน (กันการชนกัน) และมีข้อความเตือนให้ลบตัวเดิม
 
 = อัปโหลดไฟล์นอก Media Library ได้ไหม? =
 
