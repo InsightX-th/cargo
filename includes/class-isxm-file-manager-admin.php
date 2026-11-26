@@ -39,8 +39,7 @@ class ISXM_File_Manager_Admin {
         // also honour DISALLOW_FILE_EDIT and multisite).
         $code  = $admin && current_user_can( 'edit_plugins' ) && current_user_can( 'edit_themes' );
         return ( new ISXM_File_Manager( ABSPATH, null, ISXM_File_Manager_Access::rules()['root'], current_user_can( 'unfiltered_html' ), $admin, $code ) )
-            ->force_hidden( $admin )
-            ->unrestricted( $admin && is_super_admin() );
+            ->force_hidden( $admin );
     }
 
     public function enqueue_assets( $hook ) {

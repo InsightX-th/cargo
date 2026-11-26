@@ -4,7 +4,7 @@ Tags: offload, s3, minio, cloudflare r2, digitalocean spaces, cdn, migrate, medi
 Requires at least: 7.0
 Tested up to: 7.1.5
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -105,7 +105,7 @@ Secret Key ใช้ AES-256-GCM เมื่อ OpenSSL รองรับ แ�
 
 = กำหนดสิทธิ์ File Manager ได้อย่างไร? =
 
-กำหนดตาม role ในแท็บ สิทธิ์การใช้งาน: ติ๊กสิ่งที่ทำได้ (ดู อัปโหลด โฟลเดอร์ใหม่ เปลี่ยนชื่อ ย้าย ดาวน์โหลด ลบ) และเลือกโฟลเดอร์ที่ role นั้นเข้าถึงได้ super admin (บนเว็บเดี่ยวคือ Administrator) ทำได้ทุกอย่าง ไม่โดนข้อจำกัดด้านล่าง (ยกเว้นลบโฟลเดอร์ราก ออกนอก WordPress และ DISALLOW_FILE_MODS) ผู้มี manage_options อื่นได้สิทธิ์ทั้งหมด แต่ยังอยู่ใต้ข้อจำกัดไฟล์ของระบบ: ทำงานภายใน WordPress โดย wp-admin และ wp-includes เป็นแบบอ่านอย่างเดียว ใน plugins และ themes เฉพาะผู้ดูแลระบบที่เพิ่มหรือแก้ไฟล์ทั่วไป (css, js, รูป) ได้ และทำไม่ได้ถ้าตั้ง DISALLOW_FILE_EDIT ไว้ ห้ามสร้างไฟล์ที่รันได้ เช่น PHP ส่วน HTML/SVG ต้องมี unfiltered_html และไฟล์ลับ (wp-config, .env, .htaccess, ไฟล์ฐานข้อมูล, โฟลเดอร์ backup) ไม่แสดง ดาวน์โหลด คัดลอก หรือทำสำเนาไม่ได้ role ที่ไม่ใช่ผู้ดูแลระบบอ่านไฟล์ .php และไฟล์ในโฟลเดอร์ที่ .htaccess ปิดไว้ (เช่น woocommerce_uploads) ไม่ได้
+กำหนดตาม role ในแท็บ สิทธิ์การใช้งาน: ติ๊กสิ่งที่ทำได้ (ดู อัปโหลด โฟลเดอร์ใหม่ เปลี่ยนชื่อ ย้าย ดาวน์โหลด ลบ) และเลือกโฟลเดอร์ที่ role นั้นเข้าถึงได้ ผู้มี manage_options ได้สิทธิ์ทั้งหมด แต่ยังอยู่ใต้ข้อจำกัดไฟล์ของระบบ: ทำงานภายใน WordPress โดย wp-admin และ wp-includes เป็นแบบอ่านอย่างเดียว ใน plugins และ themes เฉพาะผู้ดูแลระบบที่เพิ่มหรือแก้ไฟล์ทั่วไป (css, js, รูป) ได้ และทำไม่ได้ถ้าตั้ง DISALLOW_FILE_EDIT ไว้ ห้ามสร้างไฟล์ที่รันได้ เช่น PHP ส่วน HTML/SVG ต้องมี unfiltered_html และไฟล์ลับ (wp-config, .env, .htaccess, ไฟล์ฐานข้อมูล, โฟลเดอร์ backup) ไม่แสดง ดาวน์โหลด คัดลอก หรือทำสำเนาไม่ได้ role ที่ไม่ใช่ผู้ดูแลระบบอ่านไฟล์ .php และไฟล์ในโฟลเดอร์ที่ .htaccess ปิดไว้ (เช่น woocommerce_uploads) ไม่ได้
 
 = ทำไมลบโฟลเดอร์บางโฟลเดอร์ไม่ได้? =
 

@@ -1,3 +1,8 @@
+**[1.1.2] - 2026-11-26**
+
+- **ย้อนการเปลี่ยนแปลงของ 1.1.1:** super admin กลับมาอยู่ใต้ข้อจำกัดไฟล์ของระบบเหมือน 1.1.0 (`wp-admin/`, `wp-includes/` อ่านอย่างเดียว · ห้ามสร้าง `.php`/`.htaccess` · ไฟล์ลับและโฟลเดอร์ backup ไม่แสดง · แก้ plugins/themes ตาม `DISALLOW_FILE_EDIT`)
+- ลบรูปต้นฉบับ branding รุ่นเก่าออก เหลือไอคอน v2 และ banner v3
+
 **[1.1.1] - 2026-11-26**
 
 - **File Manager: super admin ทำได้ทุกอย่าง** — super admin (บนเว็บเดี่ยวคือ Administrator) ไม่โดนข้อจำกัดไฟล์ของระบบแล้ว: แก้/ลบ/เปลี่ยนชื่อใน `wp-admin/`, `wp-includes/`, plugins, themes · อัปโหลดหรือสร้างไฟล์ `.php`, `.htaccess`, `.ini`, HTML/SVG · เห็นและจัดการไฟล์ที่ขึ้นต้นด้วยจุด, `wp-config*`, `.sql`/`.log`/`.bak` และโฟลเดอร์ backup · ไม่ขึ้นกับ `DISALLOW_FILE_EDIT` แล้ว
