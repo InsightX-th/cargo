@@ -11,10 +11,8 @@ Source images in this directory:
 
 - `cargo-icon-v2-original.png` — current full-size icon
 - `cargo-banner-v3-original.png` — current full-size generated banner
-- `cargo-banner-v2-original.png` and `cargo-banner-v2-cropped.png` — earlier Cargo banner
-- `cargo-icon-original.png`, `cargo-banner-original.png`, and `cargo-banner-cropped.png` — first Cargo concept
 
-The earlier InsightX Offload sources, `icon-original.png` and `banner-original.png`, are retained for reference.
+Earlier concepts and the InsightX Offload sources were removed; they are in git history.
 
 ## Icon prompt
 
