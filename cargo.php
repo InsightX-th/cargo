@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Cargo
  * Plugin URI:  https://insightx.in.th/
- * Version:     1.1.0
+ * Version:     1.1.1
  * Requires at least: 7.0
  * Requires PHP: 7.4
  * Author:      InsightX
@@ -64,7 +64,7 @@ if ( defined( 'ISXM_PLUGIN_DIR' ) || isxm_old_plugins_active() ) {
 
 define( 'ISXM_PLUGIN_DIR', trailingslashit( plugin_dir_path( __FILE__ ) ) );
 define( 'ISXM_PLUGIN_URL', trailingslashit( plugin_dir_url( __FILE__ ) ) );
-define( 'ISXM_PLUGIN_VERSION', '1.1.0' );
+define( 'ISXM_PLUGIN_VERSION', '1.1.1' );
 
 /*
  * GitHub update checker.

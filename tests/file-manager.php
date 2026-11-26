@@ -399,4 +399,23 @@ check( 'renaming a file to no extension is refused', code_of( $fs->rename( 'down
 $trusted = new ISXM_File_Manager( $root, false, 'download/', true, false );
 check( 'with unfiltered_html a file with no extension is allowed', code_of( $trusted->make_file( 'download', 'LICENSE' ) ) === 'ok' );
 
+group( 'Super administrators can do everything' );
+$root  = fresh_root();
+$super = ( new ISXM_File_Manager( $root, false, '', false, true, false ) )->unrestricted();
+file_put_contents( $root . 'wp-content/plugins/a/a.php', '<?php' );
+file_put_contents( $root . '.htaccess', '# x' );
+check( 'a .php can be uploaded into a plugin', ! is_wp_error( $super->upload( 'wp-content/plugins/a', 'x.php', $tmp(), false, $copy ) ) );
+check( 'a .php inside a plugin can be deleted', ! is_wp_error( $super->delete( 'wp-content/plugins/a/a.php' ) ) );
+check( 'a file can be uploaded into wp-admin/', ! is_wp_error( $super->upload( 'wp-admin', 'x.pdf', $tmp(), false, $copy ) ) );
+check( 'index.php can be renamed', ! is_wp_error( $super->rename( 'index.php', 'index-old.php' ) ) );
+check( '.htaccess shows in the listing', in_array( '.htaccess', array_column( $super->listing( '' )['files'], 'name' ), true ) );
+check( '.htaccess can be renamed', ! is_wp_error( $super->rename( '.htaccess', '.htaccess-old' ) ) );
+check( 'wp-config.php is readable', $super->readable( $root . 'wp-config.php' ) === true );
+check( 'a plugin folder with a script can be renamed', ! is_wp_error( $super->rename( 'wp-content/plugins/a', 'b' ) ) );
+check( 'wp-content/themes/ can be deleted', ! is_wp_error( $super->delete( 'wp-content/themes' ) ) );
+check( 'markup can be made without unfiltered_html', code_of( $super->make_file( 'download', 'x.html' ) ) === 'ok' );
+check( 'the root itself still cannot be deleted', is_wp_error( $super->delete( '' ) ) );
+check( '"../" is still refused', code_of( $super->resolve( 'download/../../etc' ) ) === 'isxfm_bad_path' );
+check( 'DISALLOW_FILE_MODS still wins', code_of( ( new ISXM_File_Manager( $root, true ) )->unrestricted()->make_dir( 'download', 'x' ) ) === 'isxfm_read_only' );
+
 finish();

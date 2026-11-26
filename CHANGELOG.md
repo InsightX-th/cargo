@@ -1,3 +1,9 @@
+**[1.1.1] - 2026-11-26**
+
+- **File Manager: super admin ทำได้ทุกอย่าง** — super admin (บนเว็บเดี่ยวคือ Administrator) ไม่โดนข้อจำกัดไฟล์ของระบบแล้ว: แก้/ลบ/เปลี่ยนชื่อใน `wp-admin/`, `wp-includes/`, plugins, themes · อัปโหลดหรือสร้างไฟล์ `.php`, `.htaccess`, `.ini`, HTML/SVG · เห็นและจัดการไฟล์ที่ขึ้นต้นด้วยจุด, `wp-config*`, `.sql`/`.log`/`.bak` และโฟลเดอร์ backup · ไม่ขึ้นกับ `DISALLOW_FILE_EDIT` แล้ว
+- ที่ยังกันไว้: ลบโฟลเดอร์รากของเว็บไม่ได้, ออกนอกโฟลเดอร์ WordPress ไม่ได้ (`../`, symlink), และ `DISALLOW_FILE_MODS` ยังทำให้อ่านอย่างเดียว · ผู้ดูแลเว็บย่อยบน multisite และ role อื่นใช้กฎเดิม
+- test เพิ่ม: `tests/file-manager.php` (13)
+
 **[1.1.0] - 2026-11-25**
 
 - **เปลี่ยนชื่อเป็น Cargo** (เดิม InsightX AllHub) — โฟลเดอร์และไฟล์หลัก `cargo/cargo.php`, repo ใหม่ `InsightX-th/cargo`, เมนู Cargo → Offload · จัดการไฟล์ · สำรองข้อมูล · คู่มือการใช้งาน

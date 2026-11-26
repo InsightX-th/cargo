@@ -78,6 +78,17 @@ class ISXM_File_Manager {
         return $this;
     }
 
+    /**
+     * Super administrators: none of the guards below (site code, scripts,
+     * dot-files, secrets, markup). Path safety, the root itself and
+     * DISALLOW_FILE_MODS still apply.
+     */
+    private $unrestricted = false;
+    public function unrestricted( $on = true ) {
+        $this->unrestricted = (bool) $on;
+        return $this;
+    }
+
     /** The folder this user starts in and cannot leave, root-relative. */
     public function jail() {
         return $this->jail === "\0" ? '' : $this->relative( rtrim( $this->jail, '/' ) );
@@ -146,6 +157,7 @@ class ISXM_File_Manager {
     public function valid_name( $name ) {
         $name = (string) $name;
         if ( $name === '' || strlen( $name ) > 255 || preg_match( '#[/\\\\\x00-\x1f\x7f]#', $name ) ) return $this->error( 'bad_name' );
+        if ( $this->unrestricted ) return true;
         if ( $name[0] === '.' ) return $this->error( 'hidden_name' );
         // Windows/NTFS: "x.php " and "x.php." land as x.php, "x.php::$DATA" is
         // its default stream. ":" is never valid there anyway.
@@ -166,7 +178,9 @@ class ISXM_File_Manager {
     public function writable( $absolute ) {
         if ( $this->read_only ) return $this->error( 'read_only' );
         $relative = $this->relative( $absolute );
-        if ( $relative === '' || in_array( $relative, self::READ_ONLY_FILES, true ) ) return $this->error( 'protected' );
+        if ( $relative === '' ) return $this->error( 'protected' );
+        if ( $this->unrestricted ) return true;
+        if ( in_array( $relative, self::READ_ONLY_FILES, true ) ) return $this->error( 'protected' );
         foreach ( self::READ_ONLY_DIRS as $dir ) {
             if ( strpos( $relative . '/', $dir ) === 0 || strpos( $dir, $relative . '/' ) === 0 ) return $this->error( 'protected' );
         }
@@ -192,6 +206,7 @@ class ISXM_File_Manager {
         $ok = $this->readable( $absolute );
         if ( is_wp_error( $ok ) ) return $ok;
         if ( rtrim( $absolute, '/' ) . '/' === $this->jail ) return $this->error( 'protected' );
+        if ( $this->unrestricted ) return true;
         // Scripts and dot-files (.htaccess, .user.ini …) are the site's own:
         // never renamed, moved or deleted from here.
         $name = $this->valid_name( basename( $absolute ) );
@@ -230,7 +245,7 @@ class ISXM_File_Manager {
      * @return true|WP_Error
      */
     private function code_guard( $absolute ) {
-        if ( is_link( $absolute ) || ! is_dir( $absolute ) ) return true;
+        if ( $this->unrestricted || is_link( $absolute ) || ! is_dir( $absolute ) ) return true;
         $relative = $this->relative( $absolute ) . '/';
         $in_code  = false;
         foreach ( self::CODE_DIRS as $dir ) {
@@ -269,6 +284,7 @@ class ISXM_File_Manager {
      * @return true|WP_Error
      */
     public function readable( $absolute ) {
+        if ( $this->unrestricted ) return true;
         // Callers pass resolved paths; anything else is resolved through its
         // parent first so the root prefix always matches.
         if ( strpos( $absolute, rtrim( $this->root, '/' ) ) !== 0 ) {
@@ -350,7 +366,7 @@ class ISXM_File_Manager {
         $dirs  = [];
         $files = [];
         foreach ( (array) scandir( $dir ) as $name ) {
-            if ( $name === '' || $name[0] === '.' ) continue;
+            if ( $name === '' || $name === '.' || $name === '..' || ( $name[0] === '.' && ! $this->unrestricted ) ) continue;
             $path  = $dir . '/' . $name;
             if ( $this->readable( $path ) !== true ) continue;
             $entry = $this->entry( $path, $name );
@@ -417,7 +433,7 @@ class ISXM_File_Manager {
             $stop = microtime( true ) + $seconds;
             $iter = new RecursiveIteratorIterator( new RecursiveCallbackFilterIterator(
                 new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ),
-                function ( $item ) { return strpos( $item->getFilename(), '.' ) !== 0 && ( ! $item->isDir() || $this->readable( $item->getPathname() ) === true ); }
+                function ( $item ) { return ( $this->unrestricted || strpos( $item->getFilename(), '.' ) !== 0 ) && ( ! $item->isDir() || $this->readable( $item->getPathname() ) === true ); }
             ), RecursiveIteratorIterator::SELF_FIRST, RecursiveIteratorIterator::CATCH_GET_CHILD );
             foreach ( $iter as $item ) {
                 if ( count( $items ) >= $limit || microtime( true ) > $stop ) { $truncated = true; break; }
@@ -436,7 +452,7 @@ class ISXM_File_Manager {
      * @return true|WP_Error
      */
     private function file_name_ok( $name ) {
-        if ( ! $this->allow_markup && strpos( (string) $name, '.' ) === false ) return $this->error( 'markup' );
+        if ( ! $this->unrestricted && ! $this->allow_markup && strpos( (string) $name, '.' ) === false ) return $this->error( 'markup' );
         return true;
     }
 
